@@ -1,0 +1,128 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Farmer {
+  id        String   @id @default(uuid())
+  name      String
+  region    String
+  products  String
+  story     String   @db.Text
+  practices String   @db.Text
+  photoUrl  String
+  createdAt DateTime @default(now())
+}
+
+model Request {
+  id           String   @id @default(uuid())
+  customerName String
+  email        String
+  phone        String
+  product      String
+  quantity     Int
+  points       Int
+  farmerId     String
+  status       String   @default("Pending")
+  createdAt    DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model ImpactMap {
+  product String @id
+  points  Int
+}
+
+model Article {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  summary   String   @db.Text
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model PageContent {
+  key     String @id
+  content String @db.Text
+}
+
+model Dataset {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @db.Text
+  columns     Json
+  rows        Json
+  public      Boolean  @default(false)
+  insights    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Credit {
+  id        String   @id @default(uuid())
+  role      String
+  name      String
+  platform  String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String          @id @default(uuid())
+  name         String
+  email        String          @unique
+  phone        String
+  password     String
+  impactPoints Int             @default(0)
+  createdAt    DateTime        @default(now())
+  savedListings SavedListing[]
+}
+
+model Listing {
+  id              String        @id @default(uuid())
+  name            String
+  description     String        @db.Text
+  farmerName      String
+  farmerPhone     String
+  location        String
+  availableWeight String
+  qualityDesc     String        @db.Text
+  impactPoints    Int
+  sustainability  String        @db.Text
+  photoMain       String
+  photos          String        @db.Text
+  status          String        @default("Active")
+  createdAt       DateTime      @default(now())
+  savedBy         SavedListing[]
+}
+
+model SavedListing {
+  id        String   @id @default(uuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, listingId])
+}
+
+model Admin {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  password       String
+  name           String    @default("Admin")
+  failedAttempts Int       @default(0)
+  lockoutUntil   DateTime?
+  createdAt      DateTime  @default(now())
+}

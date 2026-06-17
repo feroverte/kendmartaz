@@ -27,7 +27,8 @@ import {
   getPageContent,
   createCredit,
   updateCredit,
-  deleteCredit
+  deleteCredit,
+  getUsers
 } from "@/app/actions/dbActions";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -95,9 +96,11 @@ export default function AdminDashboardContent({
   // Settings state
   const [settings, setSettings] = useState(initialSettings);
   const [credits, setCredits] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     getCredits().then(setCredits).catch(() => {});
+    getUsers().then(setUsers).catch(() => {});
   }, []);
 
   const { locale } = useLocale();
@@ -593,7 +596,8 @@ export default function AdminDashboardContent({
             { id: "pages", label: t("admin.tabPages"), icon: <FileEdit className="w-4 h-4" /> },
             { id: "listings", label: t("admin.tabListings"), icon: <Store className="w-4 h-4" /> },
             { id: "research", label: t("admin.tabResearch"), icon: <BarChart3 className="w-4 h-4" /> },
-            { id: "credits", label: t("admin.tabCredits"), icon: <Award className="w-4 h-4" /> }
+            { id: "credits", label: t("admin.tabCredits"), icon: <Award className="w-4 h-4" /> },
+            { id: "users", label: t("admin.tabUsers"), icon: <Users className="w-4 h-4" /> }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1646,6 +1650,10 @@ export default function AdminDashboardContent({
             />
           )}
 
+          {activeTab === "users" && (
+            <UsersList t={t} users={users} />
+          )}
+
         </div>
 
       </div>
@@ -1742,6 +1750,45 @@ function CreditsManager({ credits, setCredits, showFeedback, t }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UsersList({ t, users }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <h3 className="text-xl font-serif text-emerald-950 font-bold">{t("admin.usersTitle")}</h3>
+        <p className="text-xs text-emerald-950/50 mt-1">{t("admin.usersDesc")}</p>
+      </div>
+      {users.length === 0 ? (
+        <p className="text-sm text-emerald-950/40 py-8 text-center">{t("admin.usersEmpty")}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-emerald-950/10">
+                <th className="text-left py-3 px-2 text-[10px] font-bold uppercase text-emerald-950/40">{t("admin.usersName")}</th>
+                <th className="text-left py-3 px-2 text-[10px] font-bold uppercase text-emerald-950/40">{t("admin.usersEmail")}</th>
+                <th className="text-left py-3 px-2 text-[10px] font-bold uppercase text-emerald-950/40">{t("admin.usersPhone")}</th>
+                <th className="text-center py-3 px-2 text-[10px] font-bold uppercase text-emerald-950/40">{t("admin.usersPoints")}</th>
+                <th className="text-right py-3 px-2 text-[10px] font-bold uppercase text-emerald-950/40">{t("admin.usersDate")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-emerald-950/5 hover:bg-emerald-900/[0.02]">
+                  <td className="py-3 px-2 text-emerald-950 font-medium">{u.name}</td>
+                  <td className="py-3 px-2 text-emerald-950/70">{u.email}</td>
+                  <td className="py-3 px-2 text-emerald-950/70">{u.phone || "—"}</td>
+                  <td className="py-3 px-2 text-center text-emerald-800 font-semibold">{u.impactPoints}</td>
+                  <td className="py-3 px-2 text-right text-emerald-950/50 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

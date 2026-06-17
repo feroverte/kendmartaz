@@ -846,3 +846,18 @@ export async function deleteCredit(id) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getUsers() {
+  try {
+    const auth = await getAuthHeader();
+    const res = await fetch(`${BACKEND_URL}/api/users`, {
+      headers: { ...auth },
+      cache: "no-store"
+    });
+    const data = await res.json();
+    return data.success ? data.users : [];
+  } catch (error) {
+    console.error("getUsers failed:", error);
+    return [];
+  }
+}

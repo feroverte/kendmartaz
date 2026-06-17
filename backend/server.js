@@ -596,6 +596,16 @@ app.put("/api/user/profile", authenticateUser, async (req, res) => {
   }
 });
 
+app.get("/api/users", authenticateAdmin, async (req, res) => {
+  try {
+    const users = await db.user.findMany({ orderBy: { createdAt: "desc" } });
+    const safe = users.map(({ password, ...u }) => u);
+    return res.json({ success: true, users: safe });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // ----------------------------------------------------
 // Listing Routes
 // ----------------------------------------------------

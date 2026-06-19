@@ -861,3 +861,32 @@ export async function getUsers() {
     return [];
   }
 }
+
+export async function checkListingContact(listingId) {
+  try {
+    const auth = await getAuthHeader();
+    const res = await fetch(`${BACKEND_URL}/api/listings/${listingId}/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth }
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("checkListingContact failed:", error);
+    return { completed: false, questions: [] };
+  }
+}
+
+export async function submitListingAnswer(listingId, answers) {
+  try {
+    const auth = await getAuthHeader();
+    const res = await fetch(`${BACKEND_URL}/api/listings/${listingId}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...auth },
+      body: JSON.stringify({ answers })
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("submitListingAnswer failed:", error);
+    return { success: false, error: error.message };
+  }
+}

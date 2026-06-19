@@ -15,6 +15,7 @@ model Farmer {
   story     String   @db.Text
   practices String   @db.Text
   photoUrl  String
+  phone     String?
   createdAt DateTime @default(now())
 }
 
@@ -83,9 +84,10 @@ model User {
   email        String          @unique
   phone        String
   password     String
-  impactPoints Int             @default(0)
-  createdAt    DateTime        @default(now())
-  savedListings SavedListing[]
+  impactPoints   Int              @default(0)
+  createdAt      DateTime         @default(now())
+  savedListings  SavedListing[]
+  listingAnswers ListingAnswer[]
 }
 
 model Listing {
@@ -113,6 +115,19 @@ model SavedListing {
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   listing   Listing  @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, listingId])
+}
+
+model ListingAnswer {
+  id          String   @id @default(uuid())
+  userId      String
+  listingId   String
+  answers     Json
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  listing     Listing  @relation(fields: [listingId], references: [id])
 
   @@unique([userId, listingId])
 }

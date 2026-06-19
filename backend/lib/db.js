@@ -256,5 +256,9 @@ export const db = {
     create: (args) => prisma.credit.create(args),
     update: (args) => prisma.credit.update(args),
     delete: (args) => prisma.credit.delete(args)
+  },
+  listingAnswer: {
+    findUnique: (args) => prisma.listingAnswer.findUnique(args),
+    create: (args) => prisma.listingAnswer.create(args)
   }
 };

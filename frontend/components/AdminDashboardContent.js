@@ -118,7 +118,7 @@ export default function AdminDashboardContent({
     return { en: val || "", az: "" };
   };
 
-  const [farmerForm, setFarmerForm] = useState({ id: "", name: "", region: "", products: "", story: "", practices: "", photoUrl: "" });
+  const [farmerForm, setFarmerForm] = useState({ id: "", name: "", region: "", products: "", story: "", practices: "", photoUrl: "", phone: "" });
   const [articleForm, setArticleForm] = useState({ id: "", title: toBilingual(""), summary: toBilingual(""), content: toBilingual(""), imageUrl: "" });
   const [impactForm, setImpactForm] = useState({ product: "", points: 5 });
   
@@ -297,7 +297,7 @@ export default function AdminDashboardContent({
         setFarmers([created, ...farmers]);
         showFeedback("success", t("admin.feedbackFarmerAdded"));
       }
-      setFarmerForm({ id: "", name: "", region: "", products: "", story: toBilingual(""), practices: toBilingual(""), photoUrl: "" });
+      setFarmerForm({ id: "", name: "", region: "", products: "", story: toBilingual(""), practices: toBilingual(""), photoUrl: "", phone: "" });
       setIsFarmerEditing(false);
     } catch (e) {
       showFeedback("error", t("admin.feedbackFarmerSaveFailed"));
@@ -699,7 +699,7 @@ export default function AdminDashboardContent({
                 {!isFarmerEditing && (
                   <button
                     onClick={() => {
-                      setFarmerForm({ id: "", name: "", region: "", products: "", story: toBilingual(""), practices: toBilingual(""), photoUrl: "" });
+                      setFarmerForm({ id: "", name: "", region: "", products: "", story: toBilingual(""), practices: toBilingual(""), photoUrl: "", phone: "" });
                       setIsFarmerEditing(true);
                     }}
                     className="px-4 py-2 bg-emerald-900 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1"
@@ -737,6 +737,18 @@ export default function AdminDashboardContent({
                       onChange={(e) => setFarmerForm({ ...farmerForm, region: e.target.value })}
                       className="w-full p-2.5 bg-white border border-emerald-955/15 rounded-xl text-sm focus:outline-none focus:border-emerald-800"
                       required
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.farmerPhoneLabel")}</label>
+                    <input
+                      type="text"
+                      placeholder={t("admin.farmerPhonePlaceholder")}
+                      value={farmerForm.phone}
+                      onChange={(e) => setFarmerForm({ ...farmerForm, phone: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-emerald-955/15 rounded-xl text-sm focus:outline-none focus:border-emerald-800"
                     />
                   </div>
 
@@ -819,6 +831,7 @@ export default function AdminDashboardContent({
                           <div>
                             <h4 className="font-semibold text-emerald-950 leading-none">{f.name}</h4>
                             <span className="text-[10px] text-emerald-950/50 font-bold uppercase mt-1 block">{f.region}</span>
+                            {f.phone && <span className="text-[10px] text-emerald-600 mt-0.5 block">{f.phone}</span>}
                           </div>
                         </div>
                         <p className="text-xs text-emerald-950/70 line-clamp-2 italic mb-2">"{f.story}"</p>
@@ -1593,8 +1606,90 @@ export default function AdminDashboardContent({
                   <div>
                     <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.listingQualityDesc")}</label>
                     <textarea rows="2" value={listingForm.qualityDesc} onChange={(e) => setListingForm({...listingForm, qualityDesc: e.target.value})} className="w-full p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm" required />
-                  </div>
-                  <div>
+                    </div>
+
+                    {/* Additional Photos */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.listingAdditionalPhotos")}</label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {(() => {
+                          try { return JSON.parse(listingForm.photos || "[]"); }
+                          catch { return []; }
+                        })().map((p, i) => (
+                          <div key={i} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-emerald-200 shrink-0">
+                            <img src={p} alt="" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const arr = JSON.parse(listingForm.photos || "[]");
+                                  const removed = arr.filter((_, idx) => idx !== i);
+                                  setListingForm({...listingForm, photos: JSON.stringify(removed)});
+                                }}
+                                className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
+                              >
+                                <Trash2 className="w-3 h-3 text-white" />
+                              </button>
+                            </div>
+                            <div className="absolute top-0.5 right-0.5 flex gap-0.5">
+                              {i > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const arr = JSON.parse(listingForm.photos || "[]");
+                                    [arr[i-1], arr[i]] = [arr[i], arr[i-1]];
+                                    setListingForm({...listingForm, photos: JSON.stringify(arr)});
+                                  }}
+                                  className="w-5 h-5 rounded bg-white/80 flex items-center justify-center hover:bg-white text-[10px] font-bold"
+                                >
+                                  ←
+                                </button>
+                              )}
+                              {i < JSON.parse(listingForm.photos || "[]").length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const arr = JSON.parse(listingForm.photos || "[]");
+                                    [arr[i], arr[i+1]] = [arr[i+1], arr[i]];
+                                    setListingForm({...listingForm, photos: JSON.stringify(arr)});
+                                  }}
+                                  className="w-5 h-5 rounded bg-white/80 flex items-center justify-center hover:bg-white text-[10px] font-bold"
+                                >
+                                  →
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <label className="w-20 h-20 rounded-xl border-2 border-dashed border-emerald-300 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors bg-emerald-50/50 shrink-0">
+                          <Plus className="w-5 h-5 text-emerald-400" />
+                          <span className="text-[8px] text-emerald-400 mt-0.5 font-semibold">{t("admin.upload")}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const formData = new FormData();
+                              formData.append("file", file);
+                              const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
+                              const data = await res.json();
+                              if (data.success) {
+                                const arr = JSON.parse(listingForm.photos || "[]");
+                                if (arr.length >= 9) { showFeedback("error", "Max 9 additional photos"); return; }
+                                arr.push(data.url);
+                                setListingForm({...listingForm, photos: JSON.stringify(arr)});
+                                showFeedback("success", t("admin.feedbackImageUploaded"));
+                              } else {
+                                showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
+                              }
+                            } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); }
+                            e.target.value = "";
+                          }} />
+                        </label>
+                      </div>
+                      <p className="text-[10px] text-emerald-950/30">{t("admin.listingPhotosMax", { n: 9 })}</p>
+                    </div>
+
+                    <div>
                     <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.listingSustainability")}</label>
                     <textarea rows="3" value={listingForm.sustainability} onChange={(e) => setListingForm({...listingForm, sustainability: e.target.value})} className="w-full p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm" required />
                   </div>
@@ -1607,9 +1702,20 @@ export default function AdminDashboardContent({
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                   {listings.map((listing) => (
-                    <div key={listing.id} className="p-4 border border-emerald-950/5 rounded-2xl flex items-center justify-between gap-4 bg-[#fcfbfa]">
+                      <div key={listing.id} className="p-4 border border-emerald-950/5 rounded-2xl flex items-center justify-between gap-4 bg-[#fcfbfa]">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <img src={listing.photoMain} alt={listing.name} className="w-16 h-16 object-cover rounded-xl border shrink-0" />
+                        <div className="flex -space-x-2 shrink-0">
+                          <img src={listing.photoMain} alt={listing.name} className="w-12 h-12 rounded-xl border border-emerald-200 object-cover relative z-10" />
+                          {(() => {
+                            try { const extra = JSON.parse(listing.photos || "[]"); return extra.slice(0, 2).map((p, i) => (
+                              <img key={i} src={p} alt="" className="w-12 h-12 rounded-xl border border-emerald-200 object-cover relative z-[5] -ml-2 opacity-70" />
+                            )); } catch { return null; }
+                          })()}
+                          {(() => {
+                            try { const extra = JSON.parse(listing.photos || "[]"); return extra.length > 2 ? <div className="w-12 h-12 rounded-xl border border-emerald-200 bg-emerald-50 flex items-center justify-center text-[10px] font-bold text-emerald-600 relative -ml-2">+{extra.length - 2}</div> : null; }
+                            catch { return null; }
+                          })()}
+                        </div>
                         <div className="min-w-0">
                           <h4 className="font-semibold text-emerald-950">{listing.name}</h4>
                           <p className="text-xs text-emerald-600">{listing.farmerName} &middot; {listing.location}</p>

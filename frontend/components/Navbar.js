@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Sprout, Menu, X, User, Settings, LogOut, Globe } from "lucide-react";
+import { Menu, X, User, Settings, LogOut, Globe } from "lucide-react";
 import { checkAdminSession } from "@/app/actions/dbActions";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -56,18 +56,11 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-xl bg-emerald-900 flex items-center justify-center text-emerald-200 shadow-md group-hover:bg-emerald-800 transition-all duration-300 group-hover:scale-105">
-            <Sprout className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-xl font-bold font-serif-display tracking-tight text-emerald-950 block leading-none group-hover:text-emerald-800 transition-colors">
-              KendMart
-            </span>
-            <span className="text-[10px] uppercase font-numeric tracking-wider text-emerald-700 font-semibold block mt-0.5">
-              {t("nav.climateInitiative")}
-            </span>
-          </div>
+        <Link href="/" className="flex items-center gap-3">
+          <img src="/images/logo.png" alt="KendMart" className="h-14 w-auto" />
+          <span className="text-xl font-bold font-serif-display tracking-tight text-emerald-950 leading-none">
+            KendMart
+          </span>
         </Link>
 
         {/* Desktop Links */}

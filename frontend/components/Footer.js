@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Sprout, Mail, Globe, MapPin, Heart, Award, ExternalLink } from "lucide-react";
+import { Mail, Globe, MapPin, Heart, Award, ExternalLink } from "lucide-react";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
 
@@ -21,14 +21,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
         {/* About section */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-emerald-950">
-              <Sprout className="w-4 h-4 fill-emerald-950" />
-            </div>
-            <span className="text-lg font-serif font-semibold tracking-tight">
-              KendMart
-            </span>
-          </div>
+          <img src="/images/logo.png" alt="KendMart" className="w-36 h-auto" />
           <p className="text-emerald-200/75 text-sm leading-relaxed max-w-xs">
             {t("footer.tagline")}
           </p>

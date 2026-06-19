@@ -166,7 +166,8 @@ app.post("/api/farmers", authenticateAdmin, async (req, res) => {
         products: data.products,
         story: data.story,
         practices: data.practices,
-        photoUrl: data.photoUrl || "/images/aytan.png"
+        photoUrl: data.photoUrl || "/images/aytan.png",
+        phone: data.phone || null
       }
     });
 
@@ -196,7 +197,8 @@ app.put("/api/farmers/:id", authenticateAdmin, async (req, res) => {
         products: data.products,
         story: data.story,
         practices: data.practices,
-        photoUrl: data.photoUrl
+        photoUrl: data.photoUrl,
+        phone: data.phone || null
       }
     });
     return res.json(updated);
@@ -692,6 +694,71 @@ app.delete("/api/listings/:id", authenticateAdmin, async (req, res) => {
   try {
     const deleted = await db.listing.delete({ where: { id } });
     return res.json(deleted);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Check if user already answered questions for this listing
+app.post("/api/listings/:id/contact", authenticateUser, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = await db.listingAnswer.findUnique({
+      where: { userId_listingId: { userId: req.user.id, listingId: id } }
+    });
+    const listing = await db.listing.findUnique({ where: { id } });
+    if (!listing) return res.status(404).json({ error: "Listing not found" });
+
+    if (existing) {
+      return res.json({ completed: true, phone: listing.farmerPhone, pointsAwarded: existing.points });
+    }
+    return res.json({
+      completed: false,
+      questions: [
+        {
+          id: "usage",
+          label: "How do you plan to use this product?",
+          options: ["Personal consumption", "Family & household", "Gift / sharing", "Resale", "Other"]
+        },
+        {
+          id: "reason",
+          label: "What is your main reason for choosing local?",
+          options: ["Support local farmers", "Better quality / freshness", "Environmental concerns", "Lower carbon footprint", "Price"]
+        }
+      ]
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Submit answers and earn points
+app.post("/api/listings/:id/answer", authenticateUser, async (req, res) => {
+  const { id } = req.params;
+  const { answers } = req.body;
+  try {
+    const existing = await db.listingAnswer.findUnique({
+      where: { userId_listingId: { userId: req.user.id, listingId: id } }
+    });
+    if (existing) {
+      const listing = await db.listing.findUnique({ where: { id } });
+      return res.json({ completed: true, phone: listing.farmerPhone, pointsAwarded: existing.points });
+    }
+
+    const listing = await db.listing.findUnique({ where: { id } });
+    if (!listing) return res.status(404).json({ error: "Listing not found" });
+
+    const points = listing.impactPoints || 5;
+    await db.listingAnswer.create({
+      data: { userId: req.user.id, listingId: id, answers: answers || [], points }
+    });
+
+    await db.user.update({
+      where: { id: req.user.id },
+      data: { impactPoints: { increment: points } }
+    });
+
+    return res.json({ success: true, phone: listing.farmerPhone, pointsAwarded: points });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

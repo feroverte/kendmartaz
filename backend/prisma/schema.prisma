@@ -106,6 +106,7 @@ model Listing {
   status          String        @default("Active")
   createdAt       DateTime      @default(now())
   savedBy         SavedListing[]
+  listingAnswers  ListingAnswer[]
 }
 
 model SavedListing {

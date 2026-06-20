@@ -144,6 +144,16 @@ export default function MarketContent({ initialListings }) {
 }
 
 function ListingCard({ listing, variants }) {
+  const { locale } = useLocale();
+  const t = useTranslations();
+  const loc = (val) => {
+    if (!val) return "";
+    try {
+      const p = typeof val === "string" ? JSON.parse(val) : val;
+      if (typeof p === "object" && p !== null) return p[locale] || p.en || "";
+    } catch {}
+    return val;
+  };
   return (
     <motion.div variants={variants} className="bg-white border border-emerald-950/5 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group">
       <Link href={`/market/${listing.id}`}>
@@ -166,7 +176,7 @@ function ListingCard({ listing, variants }) {
       <div className="p-5 flex flex-col gap-3">
         <Link href={`/market/${listing.id}`}>
           <h3 className="text-xl font-serif text-emerald-950 font-bold group-hover:text-emerald-700 transition-colors">
-            {listing.name}
+            {loc(listing.name)}
           </h3>
         </Link>
 
@@ -177,13 +187,13 @@ function ListingCard({ listing, variants }) {
           </div>
           <div className="flex flex-col">
             <span className="text-emerald-950/40 font-semibold uppercase tracking-wider">{t("market.quality")}</span>
-            <span className="font-semibold text-emerald-950 line-clamp-1">{listing.qualityDesc}</span>
+            <span className="font-semibold text-emerald-950 line-clamp-1">{loc(listing.qualityDesc)}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl w-fit">
           <Sparkles className="w-3 h-3" />
-          <span className="font-semibold">{t("market.sustainability")}: {listing.sustainability?.split('.')[0]}</span>
+          <span className="font-semibold">{t("market.sustainability")}: {loc(listing.sustainability)?.split('.')[0]}</span>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">

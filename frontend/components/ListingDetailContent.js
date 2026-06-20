@@ -13,6 +13,14 @@ export default function ListingDetailContent({ listing }) {
   const router = useRouter();
   const { locale } = useLocale();
   const t = useTranslations();
+  const loc = (val) => {
+    if (!val) return "";
+    try {
+      const p = typeof val === "string" ? JSON.parse(val) : val;
+      if (typeof p === "object" && p !== null) return p[locale] || p.en || "";
+    } catch {}
+    return val;
+  };
   const [isSaved, setIsSaved] = useState(false);
   const [savedId, setSavedId] = useState(null);
   const [user, setUser] = useState(null);
@@ -187,7 +195,7 @@ export default function ListingDetailContent({ listing }) {
             <div>
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-serif text-emerald-950 font-bold">{listing.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-serif text-emerald-950 font-bold">{loc(listing.name)}</h1>
                   <div className="flex items-center gap-1.5 text-sm text-emerald-700 mt-1">
                     <MapPin className="w-4 h-4" />
                     {listing.location}
@@ -215,19 +223,19 @@ export default function ListingDetailContent({ listing }) {
 
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950/40 mb-1">{t("listing.description")}</h3>
-              <p className="text-sm text-emerald-950/80 leading-relaxed">{listing.description}</p>
+              <p className="text-sm text-emerald-950/80 leading-relaxed">{loc(listing.description)}</p>
             </div>
 
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950/40 mb-1">{t("listing.quality")}</h3>
-              <p className="text-sm text-emerald-950/80">{listing.qualityDesc}</p>
+              <p className="text-sm text-emerald-950/80">{loc(listing.qualityDesc)}</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
               <div className="flex items-center gap-2 text-emerald-800 font-semibold text-sm mb-2">
                 <Sprout className="w-4 h-4" /> {t("listing.sustainability")}
               </div>
-              <p className="text-sm text-emerald-800/80">{listing.sustainability}</p>
+              <p className="text-sm text-emerald-800/80">{loc(listing.sustainability)}</p>
             </div>
 
             {/* Farmer info */}

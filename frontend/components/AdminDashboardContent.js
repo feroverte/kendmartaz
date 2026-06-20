@@ -455,7 +455,9 @@ export default function AdminDashboardContent({
     const submission = {
       ...listingForm,
       name: typeof listingForm.name === "object" ? JSON.stringify(listingForm.name) : listingForm.name,
-      description: typeof listingForm.description === "object" ? JSON.stringify(listingForm.description) : listingForm.description
+      description: typeof listingForm.description === "object" ? JSON.stringify(listingForm.description) : listingForm.description,
+      qualityDesc: typeof listingForm.qualityDesc === "object" ? JSON.stringify(listingForm.qualityDesc) : listingForm.qualityDesc,
+      sustainability: typeof listingForm.sustainability === "object" ? JSON.stringify(listingForm.sustainability) : listingForm.sustainability
     };
     try {
       if (listingForm.id) {
@@ -478,7 +480,9 @@ export default function AdminDashboardContent({
     setListingForm({
       ...listing,
       name: parseBilingualField(listing.name),
-      description: parseBilingualField(listing.description)
+      description: parseBilingualField(listing.description),
+      qualityDesc: parseBilingualField(listing.qualityDesc),
+      sustainability: parseBilingualField(listing.sustainability)
     });
     setIsListingEditing(true);
   };
@@ -1603,10 +1607,7 @@ export default function AdminDashboardContent({
                   </div>
 
                   <BilingualField label={t("admin.listingDescription")} value={listingForm.description} onChange={(v) => setListingForm({...listingForm, description: v})} type="textarea" rows={3} />
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.listingQualityDesc")}</label>
-                    <textarea rows="2" value={listingForm.qualityDesc} onChange={(e) => setListingForm({...listingForm, qualityDesc: e.target.value})} className="w-full p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm" required />
-                    </div>
+                  <BilingualField label={t("admin.listingQualityDesc")} value={listingForm.qualityDesc} onChange={(v) => setListingForm({...listingForm, qualityDesc: v})} type="textarea" rows={2} />
 
                     {/* Additional Photos */}
                     <div>
@@ -1689,10 +1690,7 @@ export default function AdminDashboardContent({
                       <p className="text-[10px] text-emerald-950/30">{t("admin.listingPhotosMax", { n: 9 })}</p>
                     </div>
 
-                    <div>
-                    <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.listingSustainability")}</label>
-                    <textarea rows="3" value={listingForm.sustainability} onChange={(e) => setListingForm({...listingForm, sustainability: e.target.value})} className="w-full p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm" required />
-                  </div>
+                  <BilingualField label={t("admin.listingSustainability")} value={listingForm.sustainability} onChange={(v) => setListingForm({...listingForm, sustainability: v})} type="textarea" rows={3} />
 
                   <div className="flex gap-3 mt-2">
                     <button type="button" onClick={() => setIsListingEditing(false)} className="flex-1 py-2.5 border border-emerald-950/15 rounded-xl text-xs font-bold uppercase tracking-wider text-emerald-950">{t("admin.cancel")}</button>

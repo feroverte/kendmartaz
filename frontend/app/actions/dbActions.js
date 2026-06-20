@@ -864,12 +864,16 @@ export async function getUsers() {
 
 export async function checkListingContact(listingId) {
   try {
-    const auth = await getAuthHeader();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("kendmart_user_token")?.value;
+    if (!token) return { completed: false, questions: [] };
     const res = await fetch(`${BACKEND_URL}/api/listings/${listingId}/contact`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...auth }
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
     });
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) return { completed: false, questions: [], error: data.error };
+    return data;
   } catch (error) {
     console.error("checkListingContact failed:", error);
     return { completed: false, questions: [] };
@@ -878,13 +882,17 @@ export async function checkListingContact(listingId) {
 
 export async function submitListingAnswer(listingId, answers) {
   try {
-    const auth = await getAuthHeader();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("kendmart_user_token")?.value;
+    if (!token) return { success: false, error: "Not logged in" };
     const res = await fetch(`${BACKEND_URL}/api/listings/${listingId}/answer`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...auth },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ answers })
     });
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || "Request failed" };
+    return data;
   } catch (error) {
     console.error("submitListingAnswer failed:", error);
     return { success: false, error: error.message };

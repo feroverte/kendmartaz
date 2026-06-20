@@ -651,6 +651,8 @@ app.post("/api/listings", authenticateAdmin, async (req, res) => {
         qualityDesc: data.qualityDesc,
         impactPoints: parseInt(data.impactPoints) || 5,
         sustainability: data.sustainability,
+        question1: data.question1 || undefined,
+        question2: data.question2 || undefined,
         photoMain: data.photoMain || "/images/placeholder-veg.jpg",
         photos: data.photos || "[]",
         status: data.status || "Active"
@@ -678,6 +680,8 @@ app.put("/api/listings/:id", authenticateAdmin, async (req, res) => {
         qualityDesc: data.qualityDesc,
         impactPoints: parseInt(data.impactPoints) || 5,
         sustainability: data.sustainability,
+        question1: data.question1 || null,
+        question2: data.question2 || null,
         photoMain: data.photoMain,
         photos: data.photos,
         status: data.status
@@ -712,9 +716,14 @@ app.post("/api/listings/:id/contact", authenticateUser, async (req, res) => {
     if (existing) {
       return res.json({ completed: true, phone: listing.farmerPhone, pointsAwarded: existing.points });
     }
+    // Return custom questions from listing if set, else default hardcoded questions
+    const hasCustomQuestions = listing.question1 && listing.question2;
     return res.json({
       completed: false,
-      questions: [
+      questions: hasCustomQuestions ? [
+        { id: "q1", label: listing.question1, options: [] },
+        { id: "q2", label: listing.question2, options: [] }
+      ] : [
         {
           id: "usage",
           label: "How do you plan to use this product?",
@@ -759,6 +768,21 @@ app.post("/api/listings/:id/answer", authenticateUser, async (req, res) => {
     });
 
     return res.json({ success: true, phone: listing.farmerPhone, pointsAwarded: points });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: get all answers for a listing
+app.get("/api/listings/:id/answers", authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const answers = await db.listingAnswer.findMany({
+      where: { listingId: id },
+      include: { user: { select: { id: true, name: true, email: true, impactPoints: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    return res.json(answers);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

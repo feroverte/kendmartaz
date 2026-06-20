@@ -104,6 +104,8 @@ model Listing {
   photoMain       String
   photos          String        @db.Text
   status          String        @default("Active")
+  question1       Json?
+  question2       Json?
   createdAt       DateTime      @default(now())
   savedBy         SavedListing[]
   listingAnswers  ListingAnswer[]

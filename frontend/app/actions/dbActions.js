@@ -898,3 +898,20 @@ export async function submitListingAnswer(listingId, answers) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getListingAnswers(listingId) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) return [];
+  try {
+    const auth = await getAuthHeader();
+    const res = await fetch(`${BACKEND_URL}/api/listings/${listingId}/answers`, {
+      headers: { ...auth },
+      cache: "no-store"
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("getListingAnswers failed:", error);
+    return [];
+  }
+}

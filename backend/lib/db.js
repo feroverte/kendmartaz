@@ -258,6 +258,7 @@ export const db = {
     delete: (args) => prisma.credit.delete(args)
   },
   listingAnswer: {
+    findMany: (args) => prisma.listingAnswer.findMany(args),
     findUnique: (args) => prisma.listingAnswer.findUnique(args),
     create: (args) => prisma.listingAnswer.create(args)
   }

@@ -28,7 +28,8 @@ import {
   createCredit,
   updateCredit,
   deleteCredit,
-  getUsers
+  getUsers,
+  getListingAnswers
 } from "@/app/actions/dbActions";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -49,7 +50,8 @@ import {
   Store,
   BarChart3,
   Upload,
-  Award
+  Award,
+  X
 } from "lucide-react";
 import BilingualField from "./BilingualField";
 
@@ -97,6 +99,9 @@ export default function AdminDashboardContent({
   const [settings, setSettings] = useState(initialSettings);
   const [credits, setCredits] = useState([]);
   const [users, setUsers] = useState([]);
+  const [viewingAnswers, setViewingAnswers] = useState(null);
+  const [answersData, setAnswersData] = useState([]);
+  const [answersLoading, setAnswersLoading] = useState(false);
 
   useEffect(() => {
     getCredits().then(setCredits).catch(() => {});
@@ -116,6 +121,21 @@ export default function AdminDashboardContent({
     if (typeof val === "object" && val !== null) return val;
     try { const parsed = JSON.parse(val); if (parsed && typeof parsed === "object" && ("en" in parsed || "az" in parsed)) return parsed; } catch {}
     return { en: val || "", az: "" };
+  };
+
+  const emptyOptions = () => [{ en: "", az: "" }, { en: "", az: "" }, { en: "", az: "" }, { en: "", az: "" }];
+  const parseQuestionField = (val) => {
+    if (!val) return { question: { en: "", az: "" }, options: emptyOptions() };
+    if (typeof val === "object" && val !== null) {
+      if (val.question) return { question: val.question, options: val.options || emptyOptions() };
+      if ("en" in val || "az" in val) return { question: val, options: emptyOptions() };
+      return { question: { en: "", az: "" }, options: emptyOptions() };
+    }
+    if (typeof val === "string") {
+      try { const p = JSON.parse(val); if (p && typeof p === "object") { if (p.question) return { question: p.question, options: p.options || emptyOptions() }; if ("en" in p || "az" in p) return { question: p, options: emptyOptions() }; } } catch {}
+      return { question: { en: val, az: "" }, options: emptyOptions() };
+    }
+    return { question: { en: "", az: "" }, options: emptyOptions() };
   };
 
   const [farmerForm, setFarmerForm] = useState({ id: "", name: "", region: "", products: "", story: "", practices: "", photoUrl: "", phone: "" });
@@ -469,7 +489,7 @@ export default function AdminDashboardContent({
         setListings([created, ...listings]);
         showFeedback("success", t("admin.feedbackListingCreated"));
       }
-      setListingForm({ id: "", name: toBilingual(""), description: toBilingual(""), farmerName: "", farmerPhone: "", location: "", availableWeight: "", qualityDesc: "", impactPoints: 5, sustainability: "", photoMain: "/images/placeholder-veg.jpg", photos: "[]", status: "Active" });
+      setListingForm({ id: "", name: toBilingual(""), description: toBilingual(""), farmerName: "", farmerPhone: "", location: "", availableWeight: "", qualityDesc: "", impactPoints: 5, sustainability: "", question1: { question: { en: "", az: "" }, options: emptyOptions() }, question2: { question: { en: "", az: "" }, options: emptyOptions() }, photoMain: "/images/placeholder-veg.jpg", photos: "[]", status: "Active" });
       setIsListingEditing(false);
     } catch (e) {
       showFeedback("error", t("admin.feedbackListingSaveFailed"));
@@ -482,7 +502,9 @@ export default function AdminDashboardContent({
       name: parseBilingualField(listing.name),
       description: parseBilingualField(listing.description),
       qualityDesc: parseBilingualField(listing.qualityDesc),
-      sustainability: parseBilingualField(listing.sustainability)
+      sustainability: parseBilingualField(listing.sustainability),
+      question1: parseQuestionField(listing.question1),
+      question2: parseQuestionField(listing.question2)
     });
     setIsListingEditing(true);
   };
@@ -496,6 +518,14 @@ export default function AdminDashboardContent({
     } catch (e) {
       showFeedback("error", t("admin.feedbackListingDeleteFailed"));
     }
+  };
+
+  const handleViewAnswers = async (listing) => {
+    setViewingAnswers(listing);
+    setAnswersLoading(true);
+    const data = await getListingAnswers(listing.id);
+    setAnswersData(data);
+    setAnswersLoading(false);
   };
 
   // 7. PAGE TEXT CONTENT HANDLERS
@@ -1533,7 +1563,7 @@ export default function AdminDashboardContent({
                 </div>
                 {!isListingEditing && (
                   <button
-                    onClick={() => { setListingForm({ id: "", name: toBilingual(""), description: toBilingual(""), farmerName: "", farmerPhone: "", location: "", availableWeight: "", qualityDesc: "", impactPoints: 5, sustainability: "", photoMain: "/images/placeholder-veg.jpg", photos: "[]", status: "Active" }); setIsListingEditing(true); }}
+                    onClick={() => { setListingForm({ id: "", name: toBilingual(""), description: toBilingual(""), farmerName: "", farmerPhone: "", location: "", availableWeight: "", qualityDesc: "", impactPoints: 5, sustainability: "", question1: { question: { en: "", az: "" }, options: emptyOptions() }, question2: { question: { en: "", az: "" }, options: emptyOptions() }, photoMain: "/images/placeholder-veg.jpg", photos: "[]", status: "Active" }); setIsListingEditing(true); }}
                     className="px-4 py-2 bg-emerald-900 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" /> {t("admin.addListing")}
@@ -1692,6 +1722,30 @@ export default function AdminDashboardContent({
 
                   <BilingualField label={t("admin.listingSustainability")} value={listingForm.sustainability} onChange={(v) => setListingForm({...listingForm, sustainability: v})} type="textarea" rows={3} />
 
+                  <div className="border-t border-emerald-950/10 pt-4">
+                    <h4 className="text-sm font-bold text-emerald-950 mb-3">{t("admin.listingQuestionsTitle")}</h4>
+                    <p className="text-[10px] text-emerald-950/50 mb-4">{t("admin.listingQuestionsDesc")}</p>
+                    <div className="flex flex-col gap-6">
+                      {[1, 2].map((qIdx) => {
+                        const qKey = `question${qIdx}`;
+                        const qField = listingForm[qKey] || { question: { en: "", az: "" }, options: emptyOptions() };
+                        return (
+                          <div key={qIdx} className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-950/5">
+                            <BilingualField label={`${t("admin.listingQuestion")} ${qIdx}`} value={qField.question} onChange={(v) => setListingForm({...listingForm, [qKey]: { ...qField, question: v }})} type="textarea" rows={2} />
+                            <div className="mt-3 grid grid-cols-1 gap-2">
+                              {[0, 1, 2, 3].map((optIdx) => {
+                                const opts = qField.options || emptyOptions();
+                                return (
+                                  <BilingualField key={optIdx} label={`${t("admin.option")} ${optIdx + 1}${optIdx === 3 ? ` (${t("admin.other")})` : ""}`} value={opts[optIdx]} onChange={(v) => { const newOpts = [...opts]; newOpts[optIdx] = v; setListingForm({...listingForm, [qKey]: { ...qField, options: newOpts }}); }} />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="flex gap-3 mt-2">
                     <button type="button" onClick={() => setIsListingEditing(false)} className="flex-1 py-2.5 border border-emerald-950/15 rounded-xl text-xs font-bold uppercase tracking-wider text-emerald-950">{t("admin.cancel")}</button>
                     <button type="submit" className="flex-1 py-2.5 bg-emerald-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-emerald-800">{listingForm.id ? t("admin.updateListing") : t("admin.createListing")}</button>
@@ -1722,12 +1776,65 @@ export default function AdminDashboardContent({
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${listing.status === "Active" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{listing.status}</span>
+                        <button onClick={() => handleViewAnswers(listing)} className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg" title={t("admin.viewAnswers")}><Users className="w-4 h-4" /></button>
                         <button onClick={() => handleEditListing(listing)} className="p-2 bg-emerald-900/5 hover:bg-emerald-900/10 text-emerald-900 rounded-lg"><Edit3 className="w-4 h-4" /></button>
                         <button onClick={() => handleDeleteListing(listing.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
                   ))}
                   {listings.length === 0 && <div className="text-center py-12 text-emerald-950/40">{t("admin.noListings")}</div>}
+                </div>
+              )}
+
+              {/* Answers viewer modal */}
+              {viewingAnswers && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-emerald-950/50 backdrop-blur-sm">
+                  <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
+                    <div className="sticky top-0 bg-white border-b border-emerald-950/5 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+                      <h3 className="font-serif text-lg font-bold text-emerald-950">{t("admin.answersFor")} {viewingAnswers.name}</h3>
+                      <button onClick={() => setViewingAnswers(null)} className="p-1 text-emerald-400 hover:text-emerald-900"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="p-6">
+                      {answersLoading ? (
+                        <div className="text-center py-8 text-emerald-950/40">{t("admin.loading")}</div>
+                      ) : answersData.length === 0 ? (
+                        <div className="text-center py-8 text-emerald-950/40">{t("admin.noAnswers")}</div>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          {answersData.map((ans) => (
+                            <div key={ans.id} className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <p className="font-semibold text-emerald-950 text-sm">{ans.user?.name || ans.user?.email || t("admin.unknownUser")}</p>
+                                  <p className="text-[10px] text-emerald-950/40">{ans.user?.email}</p>
+                                </div>
+                                <span className="text-[10px] text-emerald-600 font-semibold">{new Date(ans.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                {(() => {
+                                  const q1 = viewingAnswers.question1;
+                                  const q2 = viewingAnswers.question2;
+                                  const a = typeof ans.answers === "object" ? ans.answers : {};
+                                  const loc = (v) => { try { const p = typeof v === "string" ? JSON.parse(v) : v; return p?.[locale] || p?.en || ""; } catch { return v || ""; } };
+                                  const qText = (q) => q?.question ? loc(q.question) : loc(q);
+                                  const pairs = [];
+                                  if (a.q1 || a.usage) pairs.push({ q: qText(q1) || (a.usage ? t("admin.defaultQ1") : ""), a: a.q1 || a.usage || "" });
+                                  if (a.q2 || a.reason) pairs.push({ q: qText(q2) || (a.reason ? t("admin.defaultQ2") : ""), a: a.q2 || a.reason || "" });
+                                  return pairs.filter(p => p.q || p.a).map((p, i) => (
+                                    <div key={i} className="text-xs">
+                                      <span className="font-semibold text-emerald-950/70">{p.q}</span>
+                                      <p className="text-emerald-950 mt-0.5">{p.a}</p>
+                                    </div>
+                                  ));
+                                })()}
+                              </div>
+                              <div className="mt-2 text-[10px] text-emerald-600 font-semibold">{t("admin.pointsAwarded")}: {ans.points}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

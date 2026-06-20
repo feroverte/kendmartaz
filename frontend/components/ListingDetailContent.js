@@ -27,13 +27,27 @@ export default function ListingDetailContent({ listing }) {
   const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
   const [backHref, setBackHref] = useState("/market");
 
-  // Contact questionnaire state
+      // Contact questionnaire state
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactLoading, setContactLoading] = useState(false);
-  const [contactState, setContactState] = useState("initial"); // initial | questions | completed
+  const [contactState, setContactState] = useState("initial");
   const [contactData, setContactData] = useState(null);
   const [answers, setAnswers] = useState({});
   const [answerError, setAnswerError] = useState("");
+
+  const isQuestionDisabled = () => {
+    if (listing.question1 && listing.question1.options) {
+      const checkQ = (key) => {
+        const otherKey = `${key}Other`;
+        const otherActive = `${key}OtherActive`;
+        if (answers[otherActive]) return !answers[otherKey];
+        return !answers[key];
+      };
+      return checkQ("q1") || checkQ("q2");
+    }
+    if (listing.question1) return !answers.q1 || !answers.q2;
+    return !answers.usage || !answers.reason;
+  };
 
   // Full-screen gallery state
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -112,10 +126,22 @@ export default function ListingDetailContent({ listing }) {
   };
 
   const handleAnswerSubmit = async () => {
-    if (!answers.usage || !answers.reason) { setAnswerError(t("listing.answerRequired")); return; }
+    if (isQuestionDisabled()) { setAnswerError(t("listing.answerRequired")); return; }
     setAnswerError("");
+    let payload = { ...answers };
+    if (listing.question1 && listing.question1.options) {
+      [1, 2].forEach(i => {
+        const key = `q${i}`;
+        const otherKey = `${key}Other`;
+        if (payload[otherKey]) {
+          payload[key] = payload[otherKey];
+        }
+        delete payload[otherKey];
+        delete payload[`${key}OtherActive`];
+      });
+    }
     setContactLoading(true);
-    const res = await submitListingAnswer(listing.id, answers);
+    const res = await submitListingAnswer(listing.id, payload);
     setContactLoading(false);
     if (res.success) {
       setContactState("completed");
@@ -300,43 +326,100 @@ export default function ListingDetailContent({ listing }) {
                 </div>
                 <p className="text-sm text-emerald-950/70 mb-6">{t("listing.questionsDesc")}</p>
 
-                {/* Question 1 */}
-                <div className="mb-5">
-                  <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qUsage")}</p>
-                  <div className="flex flex-col gap-2">
-                    {t("listing.qOptionsUsage").split("|").map((opt, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setAnswers(a => ({ ...a, usage: opt }))}
-                        className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.usage === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Question 2 */}
-                <div className="mb-6">
-                  <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qReason")}</p>
-                  <div className="flex flex-col gap-2">
-                    {t("listing.qOptionsReason").split("|").map((opt, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setAnswers(a => ({ ...a, reason: opt }))}
-                        className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.reason === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {listing.question1 && listing.question1.options ? (
+                  <>
+                    {[1, 2].map((qIdx) => {
+                      const qData = listing[`question${qIdx}`];
+                      if (!qData) return null;
+                      const qText = loc(qData.question);
+                      const qKey = `q${qIdx}`;
+                      const opts = qData.options || [];
+                      const selectedOpt = opts.findIndex((o) => {
+                        const oText = loc(o);
+                        return answers[qKey] === oText;
+                      });
+                      const isOther = answers[`${qKey}OtherActive`];
+                      return (
+                        <div key={qIdx} className={qIdx === 1 ? "mb-6" : "mb-5"}>
+                          <p className="text-sm font-semibold text-emerald-950 mb-3">{qText}</p>
+                          <div className="flex flex-col gap-2">
+                            {opts.map((opt, optIdx) => {
+                              const oText = loc(opt);
+                              if (optIdx === 3) {
+                                return (
+                                  <div key={optIdx}>
+                                    <button
+                                      onClick={() => setAnswers(a => ({ ...a, [qKey]: oText || "", [`${qKey}Other`]: "", [`${qKey}OtherActive`]: true }))}
+                                      className={`w-full text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers[qKey] === oText ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : isOther ? "bg-amber-50 border-amber-300 text-emerald-950 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
+                                    >
+                                      {oText || t("listing.other")}
+                                    </button>
+                                    {isOther && (
+                                      <input
+                                        type="text"
+                                        maxLength={100}
+                                        value={answers[`${qKey}Other`] || ""}
+                                        onChange={(e) => setAnswers(a => ({ ...a, [`${qKey}Other`]: e.target.value }))}
+                                        placeholder={t("listing.otherPlaceholder")}
+                                        className="mt-2 w-full p-2.5 bg-white border border-amber-300 rounded-xl text-sm"
+                                        autoFocus
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <button
+                                  key={optIdx}
+                                  onClick={() => setAnswers(a => ({ ...a, [qKey]: oText, [`${qKey}Other`]: "", [`${qKey}OtherActive`]: false }))}
+                                  className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers[qKey] === oText ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
+                                >
+                                  {oText}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : listing.question1 ? (
+                  <>
+                    <div className="mb-5">
+                      <p className="text-sm font-semibold text-emerald-950 mb-3">{loc(listing.question1)}</p>
+                      <textarea value={answers.q1 || ""} onChange={(e) => setAnswers(a => ({ ...a, q1: e.target.value }))} className="w-full p-3 bg-white border border-emerald-200/50 rounded-xl text-sm resize-none" rows={3} placeholder={t("listing.answerPlaceholder")} />
+                    </div>
+                    <div className="mb-6">
+                      <p className="text-sm font-semibold text-emerald-950 mb-3">{loc(listing.question2)}</p>
+                      <textarea value={answers.q2 || ""} onChange={(e) => setAnswers(a => ({ ...a, q2: e.target.value }))} className="w-full p-3 bg-white border border-emerald-200/50 rounded-xl text-sm resize-none" rows={3} placeholder={t("listing.answerPlaceholder")} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-5">
+                      <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qUsage")}</p>
+                      <div className="flex flex-col gap-2">
+                        {t("listing.qOptionsUsage").split("|").map((opt, i) => (
+                          <button key={i} onClick={() => setAnswers(a => ({ ...a, usage: opt }))} className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.usage === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mb-6">
+                      <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qReason")}</p>
+                      <div className="flex flex-col gap-2">
+                        {t("listing.qOptionsReason").split("|").map((opt, i) => (
+                          <button key={i} onClick={() => setAnswers(a => ({ ...a, reason: opt }))} className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.reason === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {answerError && <p className="text-sm text-red-500 mb-4">{answerError}</p>}
 
                 <button
                   onClick={handleAnswerSubmit}
-                  disabled={!answers.usage || !answers.reason}
+                  disabled={isQuestionDisabled()}
                   className="w-full py-3.5 bg-emerald-900 hover:bg-emerald-800 disabled:bg-emerald-300 text-white rounded-2xl font-semibold text-sm transition-colors"
                 >
                   {t("listing.submitAnswers")}

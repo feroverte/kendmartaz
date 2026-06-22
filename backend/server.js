@@ -491,8 +491,10 @@ app.delete("/api/impact-maps/:product", authenticateAdmin, async (req, res) => {
 app.post("/api/user/register", async (req, res) => {
   const { name, email, phone, password } = req.body;
   try {
-    const existing = await db.user.findUnique({ where: { email } });
-    if (existing) return res.status(400).json({ success: false, error: "Email already registered" });
+    const existingEmail = await db.user.findUnique({ where: { email } });
+    if (existingEmail) return res.status(400).json({ success: false, error: "Email already registered" });
+    const existingPhone = await db.user.findFirst({ where: { phone } });
+    if (existingPhone) return res.status(400).json({ success: false, error: "Phone number already registered" });
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await db.user.create({
       data: { name, email, phone, password: hashedPassword, impactPoints: 0 }
@@ -598,6 +600,27 @@ app.put("/api/user/profile", authenticateUser, async (req, res) => {
   }
 });
 
+// User dashboard stats (impact points, farmers supported, products requested)
+app.get("/api/user/dashboard-stats", authenticateUser, async (req, res) => {
+  try {
+    const user = await db.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const answers = await db.listingAnswer.findMany({
+      where: { userId: req.user.id },
+      include: { listing: { select: { farmerName: true } } }
+    });
+
+    const productsRequested = answers.length;
+    const uniqueFarmers = [...new Set(answers.map(a => a.listing?.farmerName).filter(Boolean))].length;
+    const impactPoints = user.impactPoints || 0;
+
+    return res.json({ impactPoints, farmersSupported: uniqueFarmers, productsRequested });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/users", authenticateAdmin, async (req, res) => {
   try {
     const users = await db.user.findMany({ orderBy: { createdAt: "desc" } });
@@ -696,6 +719,8 @@ app.put("/api/listings/:id", authenticateAdmin, async (req, res) => {
 app.delete("/api/listings/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   try {
+    await db.savedListing.deleteMany({ where: { listingId: id } });
+    await db.listingAnswer.deleteMany({ where: { listingId: id } });
     const deleted = await db.listing.delete({ where: { id } });
     return res.json(deleted);
   } catch (error) {
@@ -703,20 +728,13 @@ app.delete("/api/listings/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-// Check if user already answered questions for this listing
+// Always show questions when contacting a farmer
 app.post("/api/listings/:id/contact", authenticateUser, async (req, res) => {
   const { id } = req.params;
   try {
-    const existing = await db.listingAnswer.findUnique({
-      where: { userId_listingId: { userId: req.user.id, listingId: id } }
-    });
     const listing = await db.listing.findUnique({ where: { id } });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    if (existing) {
-      return res.json({ completed: true, phone: listing.farmerPhone, pointsAwarded: existing.points });
-    }
-    // Return custom questions from listing if set, else default hardcoded questions
     const hasCustomQuestions = listing.question1 && listing.question2;
     return res.json({
       completed: false,
@@ -741,25 +759,29 @@ app.post("/api/listings/:id/contact", authenticateUser, async (req, res) => {
   }
 });
 
-// Submit answers and earn points
+// Submit answers and earn points (2 per selected answer)
 app.post("/api/listings/:id/answer", authenticateUser, async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
   try {
-    const existing = await db.listingAnswer.findUnique({
-      where: { userId_listingId: { userId: req.user.id, listingId: id } }
-    });
-    if (existing) {
-      const listing = await db.listing.findUnique({ where: { id } });
-      return res.json({ completed: true, phone: listing.farmerPhone, pointsAwarded: existing.points });
-    }
-
     const listing = await db.listing.findUnique({ where: { id } });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    const points = listing.impactPoints || 5;
+    // Count selected answers across all questions
+    let selectedCount = 0;
+    if (answers && typeof answers === "object") {
+      for (const val of Object.values(answers)) {
+        if (Array.isArray(val)) {
+          selectedCount += val.length;
+        } else if (typeof val === "string" && val.trim()) {
+          selectedCount += 1;
+        }
+      }
+    }
+    const points = (listing.impactPoints || 5) + selectedCount * 2;
+
     await db.listingAnswer.create({
-      data: { userId: req.user.id, listingId: id, answers: answers || [], points }
+      data: { userId: req.user.id, listingId: id, answers: answers || {}, points }
     });
 
     await db.user.update({
@@ -1085,6 +1107,141 @@ app.put("/api/credits/:id", authenticateAdmin, async (req, res) => {
 app.delete("/api/credits/:id", authenticateAdmin, async (req, res) => {
   try {
     await db.credit.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ----------------------------------------------------
+// FAQ Routes
+// ----------------------------------------------------
+app.get("/api/faq", async (req, res) => {
+  try {
+    const categories = await db.faqCategory.findMany({
+      include: { questions: true }
+    });
+    return res.json(categories);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/faq/categories", authenticateAdmin, async (req, res) => {
+  try {
+    const { name, order } = req.body;
+    if (!name) return res.status(400).json({ error: "Category name required" });
+    const category = await db.faqCategory.create({ data: { name, order: order || 0 } });
+    return res.json(category);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put("/api/faq/categories/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const category = await db.faqCategory.update({ where: { id: req.params.id }, data: req.body });
+    return res.json(category);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/faq/categories/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.faqQuestion.deleteMany({ where: { categoryId: req.params.id } });
+    await db.faqCategory.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/faq/questions", authenticateAdmin, async (req, res) => {
+  try {
+    const { categoryId, question, answer, order } = req.body;
+    if (!categoryId || !question) return res.status(400).json({ error: "CategoryId and question required" });
+    const q = await db.faqQuestion.create({ data: { categoryId, question, answer: answer || "", order: order || 0 } });
+    return res.json(q);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put("/api/faq/questions/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const q = await db.faqQuestion.update({ where: { id: req.params.id }, data: req.body });
+    return res.json(q);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/faq/questions/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.faqQuestion.delete({ where: { id: req.params.id } });
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ----------------------------------------------------
+// Review Routes
+// ----------------------------------------------------
+app.get("/api/reviews", async (req, res) => {
+  try {
+    const { page = 1, limit = 10, rating, search, all } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {};
+    if (!all) where.hidden = false;
+    if (rating) where.rating = parseInt(rating);
+    if (search) where.userName = { contains: search, mode: "insensitive" };
+
+    const [reviews, total] = await Promise.all([
+      db.review.findMany({ where, skip, take: limitNum }),
+      db.review.count({ where })
+    ]);
+
+    return res.json({ reviews, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/reviews", authenticateUser, async (req, res) => {
+  try {
+    const { rating, text } = req.body;
+    if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: "Rating must be 1-5" });
+    if (!text || text.length > 400) return res.status(400).json({ error: "Review text required (max 400 chars)" });
+
+    const user = await db.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const review = await db.review.create({
+      data: { userId: user.id, userName: user.name, rating, text }
+    });
+    return res.json(review);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put("/api/reviews/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const review = await db.review.update({ where: { id: req.params.id }, data: req.body });
+    return res.json(review);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/reviews/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.review.delete({ where: { id: req.params.id } });
     return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ error: error.message });

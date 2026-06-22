@@ -35,18 +35,39 @@ export default function ListingDetailContent({ listing }) {
   const [answers, setAnswers] = useState({});
   const [answerError, setAnswerError] = useState("");
 
+  const toggleOption = (qKey, optText) => {
+    setAnswers(prev => {
+      const current = prev[qKey] || [];
+      if (current.includes(optText)) {
+        return { ...prev, [qKey]: current.filter(t => t !== optText) };
+      }
+      return { ...prev, [qKey]: [...current, optText] };
+    });
+  };
+
+  const toggleOther = (qKey) => {
+    setAnswers(prev => {
+      const wasActive = !!prev[`${qKey}OtherActive`];
+      const otherText = prev[`${qKey}Other`] || "";
+      const current = prev[qKey] || [];
+      if (wasActive) {
+        return { ...prev, [`${qKey}OtherActive`]: false, [`${qKey}Other`]: "", [qKey]: current.filter(t => t !== otherText) };
+      }
+      return { ...prev, [`${qKey}OtherActive`]: true, [`${qKey}Other`]: "", [qKey]: [...current, ""] };
+    });
+  };
+
   const isQuestionDisabled = () => {
     if (listing.question1 && listing.question1.options) {
       const checkQ = (key) => {
-        const otherKey = `${key}Other`;
-        const otherActive = `${key}OtherActive`;
-        if (answers[otherActive]) return !answers[otherKey];
-        return !answers[key];
+        const otherActive = answers[`${key}OtherActive`];
+        if (otherActive) return !answers[`${key}Other`];
+        return !answers[key] || answers[key].length === 0;
       };
       return checkQ("q1") || checkQ("q2");
     }
     if (listing.question1) return !answers.q1 || !answers.q2;
-    return !answers.usage || !answers.reason;
+    return !answers.usage || answers.usage.length === 0 || !answers.reason || answers.reason.length === 0;
   };
 
   // Full-screen gallery state
@@ -133,9 +154,12 @@ export default function ListingDetailContent({ listing }) {
       [1, 2].forEach(i => {
         const key = `q${i}`;
         const otherKey = `${key}Other`;
-        if (payload[otherKey]) {
-          payload[key] = payload[otherKey];
+        const otherActive = answers[`${key}OtherActive`];
+        const arr = payload[key] || [];
+        if (otherActive) {
+          arr.push(payload[otherKey] || "");
         }
+        payload[key] = arr;
         delete payload[otherKey];
         delete payload[`${key}OtherActive`];
       });
@@ -334,11 +358,8 @@ export default function ListingDetailContent({ listing }) {
                       const qText = loc(qData.question);
                       const qKey = `q${qIdx}`;
                       const opts = qData.options || [];
-                      const selectedOpt = opts.findIndex((o) => {
-                        const oText = loc(o);
-                        return answers[qKey] === oText;
-                      });
-                      const isOther = answers[`${qKey}OtherActive`];
+                      const selected = answers[qKey] || [];
+                      const otherActive = answers[`${qKey}OtherActive`];
                       return (
                         <div key={qIdx} className={qIdx === 1 ? "mb-6" : "mb-5"}>
                           <p className="text-sm font-semibold text-emerald-950 mb-3">{qText}</p>
@@ -348,18 +369,28 @@ export default function ListingDetailContent({ listing }) {
                               if (optIdx === 3) {
                                 return (
                                   <div key={optIdx}>
-                                    <button
-                                      onClick={() => setAnswers(a => ({ ...a, [qKey]: oText || "", [`${qKey}Other`]: "", [`${qKey}OtherActive`]: true }))}
-                                      className={`w-full text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers[qKey] === oText ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : isOther ? "bg-amber-50 border-amber-300 text-emerald-950 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
-                                    >
-                                      {oText || t("listing.other")}
-                                    </button>
-                                    {isOther && (
+                                    <label className="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all bg-white border-emerald-200/50 hover:border-emerald-300">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!otherActive}
+                                        onChange={() => toggleOther(qKey)}
+                                        className="w-4 h-4 accent-emerald-700"
+                                      />
+                                      <span className="text-sm text-emerald-950/70">{oText || t("listing.other")}</span>
+                                    </label>
+                                    {otherActive && (
                                       <input
                                         type="text"
                                         maxLength={100}
                                         value={answers[`${qKey}Other`] || ""}
-                                        onChange={(e) => setAnswers(a => ({ ...a, [`${qKey}Other`]: e.target.value }))}
+                                        onChange={(e) => {
+                                          const newText = e.target.value;
+                                          setAnswers(a => ({
+                                            ...a,
+                                            [`${qKey}Other`]: newText,
+                                            [qKey]: [...(a[qKey] || []).filter(t => t !== a[`${qKey}Other`] && t !== ""), newText]
+                                          }));
+                                        }}
                                         placeholder={t("listing.otherPlaceholder")}
                                         className="mt-2 w-full p-2.5 bg-white border border-amber-300 rounded-xl text-sm"
                                         autoFocus
@@ -369,13 +400,15 @@ export default function ListingDetailContent({ listing }) {
                                 );
                               }
                               return (
-                                <button
-                                  key={optIdx}
-                                  onClick={() => setAnswers(a => ({ ...a, [qKey]: oText, [`${qKey}Other`]: "", [`${qKey}OtherActive`]: false }))}
-                                  className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers[qKey] === oText ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}
-                                >
-                                  {oText}
-                                </button>
+                                <label key={optIdx} className="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all bg-white border-emerald-200/50 hover:border-emerald-300">
+                                  <input
+                                    type="checkbox"
+                                    checked={selected.includes(oText)}
+                                    onChange={() => toggleOption(qKey, oText)}
+                                    className="w-4 h-4 accent-emerald-700"
+                                  />
+                                  <span className="text-sm text-emerald-950/70">{oText}</span>
+                                </label>
                               );
                             })}
                           </div>
@@ -400,7 +433,15 @@ export default function ListingDetailContent({ listing }) {
                       <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qUsage")}</p>
                       <div className="flex flex-col gap-2">
                         {t("listing.qOptionsUsage").split("|").map((opt, i) => (
-                          <button key={i} onClick={() => setAnswers(a => ({ ...a, usage: opt }))} className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.usage === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}>{opt}</button>
+                          <label key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all bg-white border-emerald-200/50 hover:border-emerald-300">
+                            <input
+                              type="checkbox"
+                              checked={(answers.usage || []).includes(opt)}
+                              onChange={() => toggleOption("usage", opt)}
+                              className="w-4 h-4 accent-emerald-700"
+                            />
+                            <span className="text-sm text-emerald-950/70">{opt}</span>
+                          </label>
                         ))}
                       </div>
                     </div>
@@ -408,7 +449,15 @@ export default function ListingDetailContent({ listing }) {
                       <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qReason")}</p>
                       <div className="flex flex-col gap-2">
                         {t("listing.qOptionsReason").split("|").map((opt, i) => (
-                          <button key={i} onClick={() => setAnswers(a => ({ ...a, reason: opt }))} className={`text-left px-4 py-3 rounded-xl text-sm border transition-all ${answers.reason === opt ? "bg-emerald-50 border-emerald-500 text-emerald-900 font-semibold" : "bg-white border-emerald-200/50 text-emerald-950/70 hover:border-emerald-300"}`}>{opt}</button>
+                          <label key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all bg-white border-emerald-200/50 hover:border-emerald-300">
+                            <input
+                              type="checkbox"
+                              checked={(answers.reason || []).includes(opt)}
+                              onChange={() => toggleOption("reason", opt)}
+                              className="w-4 h-4 accent-emerald-700"
+                            />
+                            <span className="text-sm text-emerald-950/70">{opt}</span>
+                          </label>
                         ))}
                       </div>
                     </div>

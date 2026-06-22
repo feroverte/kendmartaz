@@ -57,6 +57,11 @@ export default function Footer() {
                 {t("footer.educational")}
               </Link>
             </li>
+            <li>
+              <Link href="/faq-reviews" className="hover:text-white transition-colors">
+                FAQ & Reviews
+              </Link>
+            </li>
           </ul>
         </div>
 

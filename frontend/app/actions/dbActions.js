@@ -731,6 +731,22 @@ export async function checkUserSession() {
   }
 }
 
+export async function getUserDashboardStats() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("kendmart_user_token")?.value;
+    if (!token) return { impactPoints: 0, farmersSupported: 0, productsRequested: 0 };
+    const res = await fetch(`${BACKEND_URL}/api/user/dashboard-stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    });
+    if (!res.ok) return { impactPoints: 0, farmersSupported: 0, productsRequested: 0 };
+    return await res.json();
+  } catch (error) {
+    return { impactPoints: 0, farmersSupported: 0, productsRequested: 0 };
+  }
+}
+
 // ----------------------------------------------------
 // Saved Listing Actions
 // ----------------------------------------------------
@@ -914,4 +930,123 @@ export async function getListingAnswers(listingId) {
     console.error("getListingAnswers failed:", error);
     return [];
   }
+}
+
+// FAQ Actions
+export async function getFaq() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/faq`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("getFaq failed:", error);
+    return [];
+  }
+}
+
+export async function createFaqCategory(name, order) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/categories`, { method: "POST", headers, body: JSON.stringify({ name, order }) });
+  if (!res.ok) throw new Error("Failed to create category");
+  return await res.json();
+}
+
+export async function updateFaqCategory(id, data) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/categories/${id}`, { method: "PUT", headers, body: JSON.stringify(data) });
+  if (!res.ok) throw new Error("Failed to update category");
+  return await res.json();
+}
+
+export async function deleteFaqCategory(id) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/categories/${id}`, { method: "DELETE", headers });
+  if (!res.ok) throw new Error("Failed to delete category");
+  return await res.json();
+}
+
+export async function createFaqQuestion(categoryId, question, answer, order) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/questions`, { method: "POST", headers, body: JSON.stringify({ categoryId, question, answer, order }) });
+  if (!res.ok) throw new Error("Failed to create question");
+  return await res.json();
+}
+
+export async function updateFaqQuestion(id, data) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/questions/${id}`, { method: "PUT", headers, body: JSON.stringify(data) });
+  if (!res.ok) throw new Error("Failed to update question");
+  return await res.json();
+}
+
+export async function deleteFaqQuestion(id) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/faq/questions/${id}`, { method: "DELETE", headers });
+  if (!res.ok) throw new Error("Failed to delete question");
+  return await res.json();
+}
+
+// Review Actions
+export async function getReviews({ page = 1, limit = 10, rating, search, all } = {}) {
+  try {
+    const params = new URLSearchParams({ page, limit });
+    if (rating) params.set("rating", rating);
+    if (search) params.set("search", search);
+    if (all) params.set("all", "true");
+    const res = await fetch(`${BACKEND_URL}/api/reviews?${params}`, { cache: "no-store" });
+    if (!res.ok) return { reviews: [], total: 0, page: 1, totalPages: 0 };
+    return await res.json();
+  } catch (error) {
+    console.error("getReviews failed:", error);
+    return { reviews: [], total: 0, page: 1, totalPages: 0 };
+  }
+}
+
+export async function submitReview(rating, text) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("kendmart_user_token")?.value;
+    if (!token) return { success: false, error: "Not logged in" };
+    const res = await fetch(`${BACKEND_URL}/api/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ rating, text })
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || "Request failed" };
+    return { success: true, review: data };
+  } catch (error) {
+    console.error("submitReview failed:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateReview(id, data) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { "Content-Type": "application/json", ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/reviews/${id}`, { method: "PUT", headers, body: JSON.stringify(data) });
+  if (!res.ok) throw new Error("Failed to update review");
+  return await res.json();
+}
+
+export async function deleteReview(id) {
+  const isAdmin = await checkAdminSession();
+  if (!isAdmin) throw new Error("Unauthorized");
+  const headers = { ...(await getAuthHeader()) };
+  const res = await fetch(`${BACKEND_URL}/api/reviews/${id}`, { method: "DELETE", headers });
+  if (!res.ok) throw new Error("Failed to delete review");
+  return await res.json();
 }

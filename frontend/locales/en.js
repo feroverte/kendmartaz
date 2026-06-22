@@ -7,6 +7,7 @@ const en = {
   "nav.research": "Research & Insights",
   "nav.articles": "Articles",
   "nav.market": "Market",
+  "nav.faq": "FAQ & Reviews",
   "nav.signIn": "Sign In",
   "nav.signOut": "Sign Out",
   "nav.myProfile": "My Profile",
@@ -57,7 +58,7 @@ const en = {
   "mission.principlesDesc": "KendMart is built on five core principles that guide every farmer partnership and every climate impact initiative.",
   "mission.pledgeTitle": "The KendMart Pledge",
   "mission.pledgeText": "By requesting products from local farmers, I help sustainable agriculture and rural communities.",
-  "mission.pledgeDesc": "Every request strengthens local agriculture, reduces transport emissions, and supports climate resilience.",
+  "mission.pledgeDesc": "Every request strengthens local agriculture, provides less synthetic fertilizer usage, strengthens healthier soils, reduces manufactured chemical inputs usage, decreases energy use and improves biodiversity.",
 
   // Why Local page
   "whyLocal.sustainableScience": "Sustainable Science",
@@ -85,7 +86,6 @@ const en = {
   "home.totalImpactPoints": "Total Impact Points",
   "home.farmersFeatured": "Farmers Featured",
   "home.purchaseRequests": "Purchase Requests",
-  "home.co2Reduced": "CO2 Reduced (Tonnes)",
   "home.goToDashboard": "Go to Impact Dashboard",
   "home.helpUsImprove": "Help Us Improve",
   "home.surveyDesc": "Share your feedback through our quick survey.",
@@ -612,6 +612,10 @@ const en = {
   "admin.ceoPhoto": "CEO Photo",
   "admin.ceoAlt": "CEO",
   "admin.ceoPhotoPlaceholder": "/images/ceo.png",
+  "admin.missionPhotoGallery": "Photo Gallery (Carousel)",
+  "admin.missionGalleryDesc": "Add photo URLs for the mission page carousel. Each URL must point to an accessible image.",
+  "admin.addPhotoUrl": "Add Photo URL",
+  "admin.removePhoto": "Remove",
   "admin.ceoTitle": "CEO Title",
   "admin.ceoName": "CEO Name",
   "admin.ceoBio": "CEO Bio",
@@ -701,7 +705,6 @@ const en = {
   "admin.statValuePlaceholder": "Stat Value (e.g. +20%)",
 
   // Homepage Content additions
-  "home.co2Suffix": "t",
   "home.requestNamePlaceholder": "Elvin Huseynov",
   "home.requestEmailPlaceholder": "elvin@gmail.com",
   "home.requestPhonePlaceholder": "+994 50 123 4567",
@@ -770,6 +773,62 @@ const en = {
   "admin.confirmDeleteCredit": "Delete this credit entry?",
   "admin.feedbackCreditDeleted": "Credit deleted",
   "admin.feedbackCreditDeleteFailed": "Failed to delete",
+
+  // FAQ keys
+  "faq.title": "Frequently Asked Questions",
+  "faq.subtitle": "Find answers to common questions about sustainable farming, local food systems, and how KendMart works.",
+  "faq.noCategories": "No FAQ categories yet.",
+
+  // Reviews keys
+  "reviews.title": "Customer Reviews",
+  "reviews.subtitle": "Hear from our community about their experience with local sustainable farming.",
+  "reviews.averageRating": "Average Rating",
+  "reviews.totalReviews": "Total Reviews",
+  "reviews.writeReview": "Write a Review",
+  "reviews.yourRating": "Your Rating",
+  "reviews.yourReview": "Your Review",
+  "reviews.charLimit": "Max 400 characters",
+  "reviews.submit": "Submit Review",
+  "reviews.loginRequired": "Please sign in to write a review.",
+  "reviews.signIn": "Sign In",
+  "reviews.noReviews": "No reviews yet. Be the first to share your experience!",
+  "reviews.submitted": "Review submitted successfully! It will appear after moderation.",
+  "reviews.submitFailed": "Failed to submit review.",
+  "reviews.loading": "Loading reviews...",
+  "reviews.loadMore": "Load More",
+  "reviews.by": "by",
+  "reviews.on": "on",
+
+  // Admin FAQ keys
+  "admin.tabFaq": "FAQ",
+  "admin.faqTitle": "FAQ Management",
+  "admin.faqDesc": "Manage FAQ categories and questions. All questions and answers are bilingual (EN/AZ).",
+  "admin.faqAddCategory": "Add Category",
+  "admin.faqCategoryName": "Category Name",
+  "admin.faqAddQuestion": "Add Question",
+  "admin.faqQuestion": "Question",
+  "admin.faqAnswer": "Answer",
+  "admin.faqNoCategories": "No FAQ categories yet. Add one to get started.",
+  "admin.faqNoQuestions": "No questions in this category yet.",
+  "admin.faqDeleteCategory": "Delete this category and all its questions?",
+  "admin.faqDeleteQuestion": "Delete this question?",
+
+  // Admin Review keys
+  "admin.tabReviews": "Reviews",
+  "admin.reviewsTitle": "Review Moderation",
+  "admin.reviewsDesc": "Manage customer reviews. Hide inappropriate reviews or delete them permanently.",
+  "admin.reviewsAll": "All",
+  "admin.reviewsVisible": "Visible",
+  "admin.reviewsHidden": "Hidden",
+  "admin.reviewsFilterRating": "Filter by rating",
+  "admin.reviewsSearch": "Search by user name",
+  "admin.reviewsNoResults": "No reviews found.",
+  "admin.reviewsHide": "Hide",
+  "admin.reviewsShow": "Show",
+  "admin.reviewsDelete": "Delete",
+  "admin.reviewsConfirmDelete": "Delete this review permanently?",
+  "admin.reviewsToggleSuccess": "Review visibility toggled.",
+  "admin.reviewsDeleteSuccess": "Review deleted.",
 };
 
 export default en;

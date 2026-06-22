@@ -243,7 +243,8 @@ export const db = {
   savedListing: {
     findMany: (args) => prisma.savedListing.findMany(args),
     create: (args) => prisma.savedListing.create(args),
-    delete: (args) => prisma.savedListing.delete(args)
+    delete: (args) => prisma.savedListing.delete(args),
+    deleteMany: (args) => prisma.savedListing.deleteMany(args)
   },
   admin: {
     findUnique: (args) => prisma.admin.findUnique(args),
@@ -260,6 +261,28 @@ export const db = {
   listingAnswer: {
     findMany: (args) => prisma.listingAnswer.findMany(args),
     findUnique: (args) => prisma.listingAnswer.findUnique(args),
-    create: (args) => prisma.listingAnswer.create(args)
+    create: (args) => prisma.listingAnswer.create(args),
+    deleteMany: (args) => prisma.listingAnswer.deleteMany(args)
+  },
+  faqCategory: {
+    findMany: (args) => prisma.faqCategory.findMany({ ...args, orderBy: { order: 'asc' } }),
+    create: (args) => prisma.faqCategory.create(args),
+    update: (args) => prisma.faqCategory.update(args),
+    delete: (args) => prisma.faqCategory.delete(args)
+  },
+  faqQuestion: {
+    findMany: (args) => prisma.faqQuestion.findMany({ ...args, orderBy: { order: 'asc' } }),
+    create: (args) => prisma.faqQuestion.create(args),
+    update: (args) => prisma.faqQuestion.update(args),
+    delete: (args) => prisma.faqQuestion.delete(args),
+    deleteMany: (args) => prisma.faqQuestion.deleteMany(args)
+  },
+  review: {
+    findMany: (args) => prisma.review.findMany({ ...args, orderBy: { createdAt: 'desc' } }),
+    findUnique: (args) => prisma.review.findUnique(args),
+    create: (args) => prisma.review.create(args),
+    update: (args) => prisma.review.update(args),
+    delete: (args) => prisma.review.delete(args),
+    count: (args) => prisma.review.count(args)
   }
 };

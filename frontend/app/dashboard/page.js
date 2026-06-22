@@ -6,13 +6,12 @@ import {
   FileText, 
   Globe, 
   Award, 
-  Leaf, 
   ChevronRight, 
   TrendingUp, 
   ShieldCheck, 
   Activity 
 } from "lucide-react";
-import { getSettings, getRequests, getFarmers, getPageContent } from "@/app/actions/dbActions";
+import { getSettings, getRequests, getFarmers, getPageContent, getUserDashboardStats } from "@/app/actions/dbActions";
 import { getServerLocale, serverT, localizeText } from "@/lib/serverLocale";
 
 export const revalidate = 0;
@@ -48,7 +47,8 @@ export default async function DashboardPage() {
   const totalPoints = parseInt(settings.total_impact_points || "0");
   const totalRequests = parseInt(settings.purchase_requests || "0");
   const featuredFarmersCount = parseInt(settings.farmers_featured || "0");
-  const totalCo2Saved = parseFloat(settings.estimated_climate_impact || "0.0");
+
+  const userStats = await getUserDashboardStats();
 
   const defaultLevels = [
     { name: serverT(locale, "dashboard.level1Name"), points: 0, emoji: "🌱", color: "text-green-600 bg-green-50 border-green-200", desc: serverT(locale, "dashboard.level1Desc") },
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
     desc: localizeText(l.desc, locale)
   })) : defaultLevels;
 
-  const { activeLevel, nextLevel, progress } = getLevelDetails(totalPoints, levels);
+  const { activeLevel, nextLevel, progress } = getLevelDetails(userStats.impactPoints, levels);
 
   const productGroups = {};
   requests.forEach(r => {
@@ -141,18 +141,14 @@ export default async function DashboardPage() {
             </p>
 
             {/* Quick metrics */}
-            <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 gap-4 mt-6">
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-900/5 text-center">
-                <span className="text-lg font-bold font-numeric text-emerald-950 block">{totalRequests}</span>
+                <span className="text-lg font-bold font-numeric text-emerald-950 block">{userStats.productsRequested}</span>
                 <span className="text-[10px] uppercase tracking-wider text-emerald-950/50 font-semibold">{localizeText(dc.productsRequestedLabel, locale) || serverT(locale, "dashboard.productsRequestedLabel")}</span>
               </div>
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-900/5 text-center">
-                <span className="text-lg font-bold font-numeric text-emerald-950 block">{featuredFarmersCount}</span>
+                <span className="text-lg font-bold font-numeric text-emerald-950 block">{userStats.farmersSupported}</span>
                 <span className="text-[10px] uppercase tracking-wider text-emerald-950/50 font-semibold">{localizeText(dc.farmersSupportedLabel, locale) || serverT(locale, "dashboard.farmersSupportedLabel")}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-900/5 text-center">
-                <span className="text-lg font-bold font-numeric text-emerald-950 block">{totalCo2Saved.toFixed(1)}t</span>
-                <span className="text-[10px] uppercase tracking-wider text-emerald-950/50 font-semibold">{localizeText(dc.carbonSavedLabel, locale) || serverT(locale, "dashboard.carbonSavedLabel")}</span>
               </div>
             </div>
           </div>
@@ -160,7 +156,7 @@ export default async function DashboardPage() {
           <div className="mt-6">
             <div className="flex justify-between text-xs font-semibold text-emerald-950/60 mb-2">
               <span>{localizeText(dc.progressLabel, locale) || serverT(locale, "dashboard.progressLabel")} {nextLevel ? nextLevel.name : (localizeText(dc.maxLevelLabel, locale) || serverT(locale, "dashboard.maxLevelLabel"))}</span>
-              <span className="font-numeric">{totalPoints} / {nextLevel ? nextLevel.points : totalPoints} {localizeText(dc.pointsLabel, locale) || serverT(locale, "dashboard.pointsLabel")}</span>
+              <span className="font-numeric">{userStats.impactPoints} / {nextLevel ? nextLevel.points : userStats.impactPoints} {localizeText(dc.pointsLabel, locale) || serverT(locale, "dashboard.pointsLabel")}</span>
             </div>
             {/* Progress Bar */}
             <div className="w-full h-3 bg-emerald-900/5 rounded-full overflow-hidden">
@@ -208,7 +204,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Grid 2: Statistics counters */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <div className="p-6 rounded-2xl bg-white border border-emerald-950/5 shadow-sm text-center">
           <span className="text-2xl block mb-2">🌱</span>
           <span className="text-2xl md:text-3xl font-bold font-numeric text-emerald-950 block">{totalPoints}</span>
@@ -224,18 +220,13 @@ export default async function DashboardPage() {
           <span className="text-2xl md:text-3xl font-bold font-numeric text-emerald-950 block">{featuredFarmersCount}</span>
           <span className="text-xs uppercase tracking-wider text-emerald-950/40 font-semibold mt-1 block">{localizeText(dc.activeFarmersLabel, locale) || serverT(locale, "dashboard.activeFarmersLabel")}</span>
         </div>
-        <div className="p-6 rounded-2xl bg-white border border-emerald-950/5 shadow-sm text-center">
-          <span className="text-2xl block mb-2">🌍</span>
-          <span className="text-2xl md:text-3xl font-bold font-numeric text-emerald-950 block">{totalCo2Saved.toFixed(2)}t</span>
-          <span className="text-xs uppercase tracking-wider text-emerald-950/40 font-semibold mt-1 block">{localizeText(dc.co2ReducedLabel, locale) || serverT(locale, "dashboard.co2ReducedLabel")}</span>
-        </div>
       </div>
 
       {/* Grid 3: Visual SVG Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         
         {/* Product Demand Bar Chart */}
-        <div className="bg-white border border-emerald-950/5 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white border border-emerald-950/5 rounded-3xl p-8 shadow-sm lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-xl font-serif text-emerald-950 font-bold">{localizeText(dc.topProductsTitle, locale) || serverT(locale, "dashboard.topProductsTitle")}</h3>
@@ -268,39 +259,6 @@ export default async function DashboardPage() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* CO2 Emissions Offset Visual */}
-        <div className="bg-emerald-950 text-white rounded-3xl p-8 shadow-sm flex flex-col justify-between gap-6">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-green-400">
-              {localizeText(dc.impactFormulaSub, locale) || serverT(locale, "dashboard.impactFormulaSub")}
-            </span>
-            <h3 className="text-2xl font-serif font-bold text-white mt-1 mb-4">
-              {localizeText(dc.impactFormulaTitle, locale) || serverT(locale, "dashboard.impactFormulaTitle")}
-            </h3>
-            <p className="text-emerald-200/80 text-sm leading-relaxed mb-4">
-              {localizeText(dc.impactFormulaText, locale) || serverT(locale, "dashboard.impactFormulaText")}
-            </p>
-            
-            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs text-emerald-300">
-                <span>{localizeText(dc.calculatedOffsetLabel, locale) || serverT(locale, "dashboard.calculatedOffsetLabel")}</span>
-                <span className="font-numeric font-bold">{totalPoints} points × 2kg</span>
-              </div>
-              <div className="h-px bg-white/10" />
-              <div className="flex justify-between items-center text-sm font-semibold">
-                <span>{localizeText(dc.totalSavingsLabel, locale) || serverT(locale, "dashboard.totalSavingsLabel")}</span>
-                <span className="font-numeric font-bold text-lg text-green-300">
-                  {totalCo2Saved.toFixed(3)} {localizeText(dc.tonnesLabel, locale) || serverT(locale, "dashboard.tonnesLabel")}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 text-xs text-emerald-300/80 uppercase font-semibold tracking-wider pt-4 border-t border-white/10">
-            <Leaf className="w-4 h-4 text-green-400" /> {(localizeText(dc.treesMatchLabel, locale) || serverT(locale, "dashboard.treesMatchLabel")).replace("{trees}", Math.round(totalCo2Saved * 45))}
           </div>
         </div>
 

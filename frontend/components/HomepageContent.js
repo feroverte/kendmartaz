@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { 
   Leaf, 
@@ -13,6 +13,7 @@ import {
   Search, 
   CheckCircle2, 
   Heart, 
+  ChevronLeft,
   ChevronRight, 
   ShieldCheck, 
   X,
@@ -28,7 +29,133 @@ function ht(value, locale) {
   if (typeof value === "object" && value !== null) {
     return value[locale] || value.en || "";
   }
+  if (typeof value === "string" && (value.startsWith("{") || value.startsWith('"'))) {
+    try { const p = JSON.parse(value); if (typeof p === "object" && p !== null) return p[locale] || p.en || ""; } catch {}
+  }
   return value || "";
+}
+
+function InfiniteCarousel({ farmers, t, _t, handleOpenModal }) {
+  const perPage = 3;
+  const slides = [];
+  for (let i = 0; i < farmers.length; i += perPage) {
+    slides.push(farmers.slice(i, i + perPage));
+  }
+  const total = slides.length;
+
+  const extended = total > 1 ? [slides[total - 1], ...slides, slides[0]] : slides;
+  const [idx, setIdx] = useState(total > 1 ? 1 : 0);
+  const [smooth, setSmooth] = useState(true);
+  const timerRef = useRef(null);
+
+  const realIdx = total > 1 ? ((idx - 1) % total + total) % total : 0;
+
+  const move = useCallback((dir) => {
+    setSmooth(true);
+    setIdx((prev) => {
+      const next = prev + dir;
+      const max = extended.length - 1;
+      if (next < 0) return 0;
+      if (next > max) return max;
+      return next;
+    });
+  }, [extended.length]);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    if (idx === 0) {
+      const t = setTimeout(() => { setSmooth(false); setIdx(total); }, 500);
+      return () => clearTimeout(t);
+    }
+    if (idx === extended.length - 1) {
+      const t = setTimeout(() => { setSmooth(false); setIdx(1); }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [idx, total, extended.length]);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    if (!smooth) {
+      const t = setTimeout(() => setSmooth(true), 50);
+      return () => clearTimeout(t);
+    }
+  }, [smooth, total]);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    timerRef.current = setInterval(() => move(1), 7000);
+    return () => clearInterval(timerRef.current);
+  }, [move, total]);
+
+  const card = (farmer) => (
+    <div key={farmer.id} className="bg-white border border-emerald-950/5 rounded-3xl overflow-hidden shadow-sm hover-lift flex flex-col">
+      <div className="relative h-64 w-full bg-emerald-900/10 shrink-0">
+        <img src={farmer.photoUrl} alt={farmer.name} className="w-full h-full object-cover" />
+        <div className="absolute top-4 left-4 flex items-center gap-1 bg-[#fbfaf7]/90 backdrop-blur-sm border border-emerald-900/10 px-3 py-1 rounded-full text-xs font-semibold text-emerald-900 shadow-sm">
+          <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+          {farmer.region}
+        </div>
+      </div>
+      <div className="p-6 flex-1 flex flex-col gap-4 overflow-y-auto min-h-0">
+        <div>
+          <h3 className="text-2xl font-serif text-emerald-950 font-bold">{farmer.name}</h3>
+          <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mt-1">🌱 {farmer.products}</p>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-950/40 block">{t("home.farmerStory")}</span>
+          <p className="text-sm text-emerald-950/70 leading-relaxed mt-1 font-light italic">"{_t(farmer.story)}"</p>
+        </div>
+        <div>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-950/40 block">{t("home.sustainabilityPractices")}</span>
+          <p className="text-sm text-emerald-900 font-medium leading-relaxed mt-1">{_t(farmer.practices)}</p>
+        </div>
+      </div>
+      <div className="p-6 border-t border-emerald-900/5 bg-[#fcfbfa]/50 shrink-0">
+        <button onClick={() => handleOpenModal(farmer)} className="w-full py-3 bg-emerald-900 hover:bg-emerald-800 text-white rounded-xl font-semibold text-sm transition-colors duration-200">
+          {t("home.requestProduct")}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative">
+      <div className="overflow-hidden rounded-3xl">
+        <div
+          className="flex"
+          style={{
+            width: "100%",
+            transform: `translateX(-${idx * 100}%)`,
+            transition: smooth ? "transform 500ms ease-in-out" : "none"
+          }}
+        >
+          {extended.map((slideFarmers, si) => (
+            <div key={si} className="w-full flex-none">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {slideFarmers.map(card)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {total > 1 && (
+        <>
+          <button onClick={() => move(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 bg-white border border-emerald-950/10 rounded-full shadow-sm flex items-center justify-center hover:bg-emerald-50 transition-colors z-10">
+            <ChevronLeft className="w-5 h-5 text-emerald-950" />
+          </button>
+          <button onClick={() => move(1)} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 bg-white border border-emerald-950/10 rounded-full shadow-sm flex items-center justify-center hover:bg-emerald-50 transition-colors z-10">
+            <ChevronRight className="w-5 h-5 text-emerald-950" />
+          </button>
+          <div className="flex justify-center gap-2 mt-8">
+            {Array.from({ length: total }).map((_, i) => (
+              <button key={i} onClick={() => { setSmooth(true); setIdx(i + 1); }} className={`w-2.5 h-2.5 rounded-full transition-all ${i === realIdx ? "bg-emerald-900 w-6" : "bg-emerald-900/20"}`} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function HomepageContent({ initialFarmers, initialSettings, initialPageContent, locale = "en" }) {
@@ -60,9 +187,12 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
   const regions = ["All", ...new Set(farmers.map(f => f.region))];
 
   const filteredFarmers = farmers.filter(f => {
-    const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.products.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.practices.toLowerCase().includes(searchQuery.toLowerCase());
+    const fName = (typeof f.name === "object" ? f.name.en || f.name.az || "" : f.name || "").toLowerCase();
+    const fProducts = (typeof f.products === "object" ? f.products.en || f.products.az || "" : f.products || "").toLowerCase();
+    const fPractices = ht(f.practices, locale).toLowerCase();
+    const matchesSearch = fName.includes(searchQuery.toLowerCase()) ||
+                          fProducts.includes(searchQuery.toLowerCase()) ||
+                          fPractices.includes(searchQuery.toLowerCase());
     const matchesRegion = selectedRegion === "All" || f.region === selectedRegion;
     return matchesSearch && matchesRegion;
   });
@@ -235,78 +365,20 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
           </div>
         </div>
 
-        {/* Farmer Grid */}
+        {/* Farmer Carousel */}
         {filteredFarmers.length === 0 ? (
           <div className="text-center py-20 bg-white border border-emerald-900/5 rounded-3xl">
             <p className="text-emerald-950/60 font-light">{t("home.noFarmers")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredFarmers.map((farmer) => (
-              <div 
-                key={farmer.id} 
-                className="bg-white border border-emerald-950/5 rounded-3xl overflow-hidden shadow-sm hover-lift flex flex-col justify-between"
-              >
-                {/* Farmer Image */}
-                <div className="relative h-64 w-full bg-emerald-900/10">
-                  <img
-                    src={farmer.photoUrl}
-                    alt={farmer.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 left-4 flex items-center gap-1 bg-[#fbfaf7]/90 backdrop-blur-sm border border-emerald-900/10 px-3 py-1 rounded-full text-xs font-semibold text-emerald-900 shadow-sm">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-700" />
-                    {farmer.region}
-                  </div>
-                </div>
-
-                {/* Farmer Details */}
-                <div className="p-6 flex-grow flex flex-col gap-4">
-                  <div>
-                    <h3 className="text-2xl font-serif text-emerald-950 font-bold">{farmer.name}</h3>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-green-700 mt-1">
-                      🌱 {farmer.products}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-950/40 block">
-                      {t("home.farmerStory")}
-                    </span>
-                    <p className="text-sm text-emerald-950/70 leading-relaxed mt-1 font-light italic">
-                      "{farmer.story}"
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-950/40 block">
-                      {t("home.sustainabilityPractices")}
-                    </span>
-                    <p className="text-sm text-emerald-900 font-medium leading-relaxed mt-1">
-                      {farmer.practices}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Farmer Actions */}
-                <div className="p-6 border-t border-emerald-900/5 bg-[#fcfbfa]/50">
-                  <button
-                    onClick={() => handleOpenModal(farmer)}
-                    className="w-full py-3 bg-emerald-900 hover:bg-emerald-800 text-white rounded-xl font-semibold text-sm transition-colors duration-200"
-                  >
-                    {t("home.requestProduct")}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <InfiniteCarousel farmers={filteredFarmers} t={t} _t={_t} handleOpenModal={handleOpenModal} />
         )}
       </section>
 
       {/* 3. STATS / COUNTERS SECTION */}
       <section id="statistics-section" className="py-16 bg-emerald-950 text-white relative">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
             
             {/* Stat 1 */}
             <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
@@ -344,19 +416,6 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
               </div>
                 <span className="text-xs md:text-sm uppercase tracking-wider text-emerald-200/70 font-medium">
                 {t("home.purchaseRequests")}
-              </span>
-            </div>
-
-            {/* Stat 4 */}
-            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4">
-                <Globe className="w-6 h-6" />
-              </div>
-              <div className="text-3xl md:text-4xl font-numeric font-bold mb-1">
-                <AnimatedCounter value={stats.estimated_climate_impact || "0.0"} suffix={t("home.co2Suffix")} />
-              </div>
-                <span className="text-xs md:text-sm uppercase tracking-wider text-emerald-200/70 font-medium">
-                {t("home.co2Reduced")}
               </span>
             </div>
 

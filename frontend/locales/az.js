@@ -7,6 +7,7 @@ const az = {
   "nav.research": "Araşdırma və Məlumatlar",
   "nav.articles": "Məqalələr",
   "nav.market": "Bazar",
+  "nav.faq": "FAQ & Rəylər",
   "nav.signIn": "Daxil Ol",
   "nav.signOut": "Çıxış",
   "nav.myProfile": "Profilim",
@@ -57,7 +58,7 @@ const az = {
   "mission.principlesDesc": "KendMart hər bir fermer tərəfdaşlığını və hər iqlim təsir təşəbbüsünü istiqamətləndirən beş əsas prinsip üzərində qurulmuşdur.",
   "mission.pledgeTitle": "KendMart Andı",
   "mission.pledgeText": "Yerli fermerlərdən məhsul sifariş etməklə davamlı kənd təsərrüfatına və kənd icmalarına kömək edirəm.",
-  "mission.pledgeDesc": "Hər sifariş yerli kənd təsərrüfatını gücləndirir, nəqliyyat emissiyalarını azaldır və iqlim dayanıqlılığını dəstəkləyir.",
+  "mission.pledgeDesc": "Hər sorğu yerli kənd təsərrüfatını gücləndirir, daha az sintetik gübrə istifadəsini təmin edir, daha sağlam torpaqları gücləndirir, istehsal olunmuş kimyəvi maddələrin istifadəsini azaldır, enerji istehlakını azaldır və biomüxtəlifliyi yaxşılaşdırır.",
 
   // Why Local page
   "whyLocal.sustainableScience": "Davamlı Elm",
@@ -85,7 +86,6 @@ const az = {
   "home.totalImpactPoints": "Ümumi Təsir Balları",
   "home.farmersFeatured": "Fermerlər",
   "home.purchaseRequests": "Alış Sifarişləri",
-  "home.co2Reduced": "CO2 Azaldılması (Ton)",
   "home.goToDashboard": "Təsir Panelına Keç",
   "home.helpUsImprove": "Bizə Kömək Edin",
   "home.surveyDesc": "Sürətli sorğumuz vasitəsilə rəyinizi bölüşün.",
@@ -612,6 +612,10 @@ const az = {
   "admin.ceoPhoto": "CEO Şəkli",
   "admin.ceoAlt": "CEO",
   "admin.ceoPhotoPlaceholder": "/images/ceo.png",
+  "admin.missionPhotoGallery": "Foto Qalereya (Karousel)",
+  "admin.missionGalleryDesc": "Missiya səhifəsi karuseli üçün şəkil URL-ləri əlavə edin. Hər URL əlçatan bir şəklə işarə etməlidir.",
+  "admin.addPhotoUrl": "Şəkil URL-i Əlavə Et",
+  "admin.removePhoto": "Sil",
   "admin.ceoTitle": "CEO Başlığı",
   "admin.ceoName": "CEO Adı",
   "admin.ceoBio": "CEO Bio",
@@ -701,7 +705,6 @@ const az = {
   "admin.statValuePlaceholder": "Stat Dəyəri (Məsələn, +20%)",
 
   // Homepage Content additions
-  "home.co2Suffix": "t",
   "home.requestNamePlaceholder": "Elvin Hüseynov",
   "home.requestEmailPlaceholder": "elvin@gmail.com",
   "home.requestPhonePlaceholder": "+994 50 123 4567",
@@ -770,6 +773,62 @@ const az = {
   "admin.confirmDeleteCredit": "Bu təşəkkür qeydini silmək istəyirsiniz?",
   "admin.feedbackCreditDeleted": "Təşəkkür silindi",
   "admin.feedbackCreditDeleteFailed": "Silinə bilmədi",
+
+  // FAQ keys
+  "faq.title": "Tez-tez Verilən Suallar",
+  "faq.subtitle": "Davamlı kənd təsərrüfatı, yerli qida sistemləri və KendMart-ın işləməsi haqqında ümumi suallara cavab tapın.",
+  "faq.noCategories": "Hələ FAQ kateqoriyası yoxdur.",
+
+  // Reviews keys
+  "reviews.title": "Müştəri Rəyləri",
+  "reviews.subtitle": "Cəmiyyətimizin yerli davamlı kənd təsərrüfatı ilə təcrübəsi haqqında eşidin.",
+  "reviews.averageRating": "Orta Qiymət",
+  "reviews.totalReviews": "Ümumi Rəylər",
+  "reviews.writeReview": "Rəy Yazın",
+  "reviews.yourRating": "Qiymətiniz",
+  "reviews.yourReview": "Rəyiniz",
+  "reviews.charLimit": "Maksimum 400 simvol",
+  "reviews.submit": "Rəy Göndər",
+  "reviews.loginRequired": "Rəy yazmaq üçün daxil olun.",
+  "reviews.signIn": "Daxil Ol",
+  "reviews.noReviews": "Hələ rəy yoxdur. İlk təcrübənizi bölüşən olun!",
+  "reviews.submitted": "Rəyiniz uğurla göndərildi! Moderasiyadan sonra görünəcək.",
+  "reviews.submitFailed": "Rəy göndərilə bilmədi.",
+  "reviews.loading": "Rəylər yüklənir...",
+  "reviews.loadMore": "Daha Çox",
+  "reviews.by": "tərəfindən",
+  "reviews.on": "tarixində",
+
+  // Admin FAQ keys
+  "admin.tabFaq": "FAQ",
+  "admin.faqTitle": "FAQ İdarəetmə",
+  "admin.faqDesc": "FAQ kateqoriyalarını və suallarını idarə edin. Bütün suallar və cavablar ikidillidir (EN/AZ).",
+  "admin.faqAddCategory": "Kateqoriya Əlavə Et",
+  "admin.faqCategoryName": "Kateqoriya Adı",
+  "admin.faqAddQuestion": "Sual Əlavə Et",
+  "admin.faqQuestion": "Sual",
+  "admin.faqAnswer": "Cavab",
+  "admin.faqNoCategories": "Hələ FAQ kateqoriyası yoxdur. Başlamaq üçün birini əlavə edin.",
+  "admin.faqNoQuestions": "Bu kateqoriyada hələ sual yoxdur.",
+  "admin.faqDeleteCategory": "Bu kateqoriyanı və bütün suallarını silmək istəyirsiniz?",
+  "admin.faqDeleteQuestion": "Bu sualı silmək istəyirsiniz?",
+
+  // Admin Review keys
+  "admin.tabReviews": "Rəylər",
+  "admin.reviewsTitle": "Rəy Moderasiyası",
+  "admin.reviewsDesc": "Müştəri rəylərini idarə edin. Uyğun olmayan rəyləri gizlədin və ya silin.",
+  "admin.reviewsAll": "Hamısı",
+  "admin.reviewsVisible": "Görünən",
+  "admin.reviewsHidden": "Gizli",
+  "admin.reviewsFilterRating": "Qiymətə görə filtrlə",
+  "admin.reviewsSearch": "İstifadəçi adına görə axtar",
+  "admin.reviewsNoResults": "Rəy tapılmadı.",
+  "admin.reviewsHide": "Gizlət",
+  "admin.reviewsShow": "Göstər",
+  "admin.reviewsDelete": "Sil",
+  "admin.reviewsConfirmDelete": "Bu rəyi birdəfəlik silmək istəyirsiniz?",
+  "admin.reviewsToggleSuccess": "Rəy görünməsi dəyişdirildi.",
+  "admin.reviewsDeleteSuccess": "Rəy silindi.",
 };
 
 export default az;

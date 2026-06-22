@@ -131,8 +131,6 @@ model ListingAnswer {
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
   listing     Listing  @relation(fields: [listingId], references: [id])
-
-  @@unique([userId, listingId])
 }
 
 model Admin {
@@ -143,4 +141,32 @@ model Admin {
   failedAttempts Int       @default(0)
   lockoutUntil   DateTime?
   createdAt      DateTime  @default(now())
+}
+
+model FaqCategory {
+  id        String        @id @default(uuid())
+  name      Json
+  order     Int           @default(0)
+  questions FaqQuestion[]
+  createdAt DateTime      @default(now())
+}
+
+model FaqQuestion {
+  id         String      @id @default(uuid())
+  categoryId String
+  category   FaqCategory @relation(fields: [categoryId], references: [id])
+  question   Json
+  answer     Json
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  userName  String
+  rating    Int
+  text      String   @db.Text
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

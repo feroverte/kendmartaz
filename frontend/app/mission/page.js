@@ -2,6 +2,7 @@ import React from "react";
 import { getPageContent } from "@/app/actions/dbActions";
 import { Leaf, Sprout, Globe, Heart, ShieldCheck } from "lucide-react";
 import { getServerLocale, serverT, localizeText } from "@/lib/serverLocale";
+import ImageCarousel from "@/components/ImageCarousel";
 
 export const revalidate = 0;
 
@@ -112,6 +113,11 @@ export default async function MissionPage() {
           )}
         </div>
       </section>
+
+      {/* Photo Gallery Carousel */}
+      {pageData?.photos && pageData.photos.length > 0 && (
+        <ImageCarousel photos={pageData.photos} />
+      )}
 
       {/* Quote Banner */}
       <section className="bg-[#f3f1eb] py-20 px-6 text-center">

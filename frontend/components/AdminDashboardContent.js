@@ -29,7 +29,14 @@ import {
   updateCredit,
   deleteCredit,
   getUsers,
-  getListingAnswers
+  getListingAnswers,
+  createFaqCategory,
+  deleteFaqCategory,
+  createFaqQuestion,
+  deleteFaqQuestion,
+  getReviews,
+  updateReview,
+  deleteReview
 } from "@/app/actions/dbActions";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -51,7 +58,8 @@ import {
   BarChart3,
   Upload,
   Award,
-  X
+  X,
+  Star
 } from "lucide-react";
 import BilingualField from "./BilingualField";
 
@@ -110,6 +118,11 @@ export default function AdminDashboardContent({
 
   const { locale } = useLocale();
   const t = useTranslations();
+  const loc = (val) => {
+    if (!val) return "";
+    try { const p = typeof val === "string" ? JSON.parse(val) : val; if (typeof p === "object" && p !== null) return p[locale] || p.en || ""; } catch {}
+    return val;
+  };
 
   // Forms state
   const b64default = (existing, enVal, azVal) => {
@@ -151,6 +164,7 @@ export default function AdminDashboardContent({
     ceoName: b64default(initialMissionPage?.ceoName, "Leyla Heydarova", "Leyla Heydarova"),
     ceoBio: b64default(initialMissionPage?.ceoBio, "Environmental advocate and founder of KendMart. Working to connect consumers with regenerative agriculture practices across Azerbaijan.", "Ətraf mühit müdafiəçisi və KendMart-ın qurucusu. Azərbaycan üzrə istehlakçıları regenerativ kənd təsərrüfatı təcrübələri ilə birləşdirmək üçün çalışır."),
     ceoQuote: b64default(initialMissionPage?.ceoQuote, "Sustainable agriculture is not just about growing food — it is about nurturing communities, protecting our land, and building a future where every choice we make respects the planet and its people.", "Davamlı kənd təsərrüfatı yalnız qida yetişdirmək deyil — icmaları qidalandırmaq, torpağımızı qorumaq və hər seçimimizin planetə və insanlara hörmət etdiyi bir gələcək qurmaqdır."),
+    photos: Array.isArray(initialMissionPage?.photos) ? [...initialMissionPage.photos] : [],
     sections: Array.isArray(initialMissionPage?.sections) ? initialMissionPage.sections.map(s => bilingualify(s, ["title", "description"])) : [
       (() => { const o = { title: { en: "Sustainable Agriculture", az: "Davamlı Kənd Təsərrüfatı" }, description: { en: "Traditional industrial agriculture depletes topsoil, relies heavily on chemical pesticides, and emits massive greenhouse gases. We support regenerative methods that protect ecosystems.", az: "Ənənəvi sənaye kənd təsərrüfatı torpağı tükəndirir, kimyəvi pestisidlərdən asılıdır və böyük miqdarda istixana qazı buraxır. Biz ekosistemləri qoruyan regenerativ metodları dəstəkləyirik." } }; return o; })(),
       (() => { const o = { title: { en: "Local Food Systems", az: "Yerli Qida Sistemləri" }, description: { en: "By building short, local demand networks, we reduce the emissions caused by transcontinental food transport (food miles) and packaging waste.", az: "Qısa, yerli tələb şəbəkələri quraraq, transkontinental qida nəqliyyatı (qida milləri) və qablaşdırma tullantıları nəticəsində yaranan emissiyaları azaldırıq." } }; return o; })(),
@@ -631,7 +645,9 @@ export default function AdminDashboardContent({
             { id: "listings", label: t("admin.tabListings"), icon: <Store className="w-4 h-4" /> },
             { id: "research", label: t("admin.tabResearch"), icon: <BarChart3 className="w-4 h-4" /> },
             { id: "credits", label: t("admin.tabCredits"), icon: <Award className="w-4 h-4" /> },
-            { id: "users", label: t("admin.tabUsers"), icon: <Users className="w-4 h-4" /> }
+            { id: "users", label: t("admin.tabUsers"), icon: <Users className="w-4 h-4" /> },
+            { id: "faq", label: t("admin.tabFaq"), icon: <FileText className="w-4 h-4" /> },
+            { id: "reviews", label: t("admin.tabReviews"), icon: <FileText className="w-4 h-4" /> }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -868,7 +884,7 @@ export default function AdminDashboardContent({
                             {f.phone && <span className="text-[10px] text-emerald-600 mt-0.5 block">{f.phone}</span>}
                           </div>
                         </div>
-                        <p className="text-xs text-emerald-950/70 line-clamp-2 italic mb-2">"{f.story}"</p>
+                        <p className="text-xs text-emerald-950/70 line-clamp-2 italic mb-2">"{loc(f.story)}"</p>
                         <p className="text-xs text-green-700 font-semibold mb-3">🌾 {t("admin.crops")}: {f.products}</p>
                       </div>
                       
@@ -1331,6 +1347,66 @@ export default function AdminDashboardContent({
                 <BilingualField label={t("admin.ceoName")} value={missionForm.ceoName} onChange={(v) => setMissionForm({ ...missionForm, ceoName: v })} />
                 <BilingualField label={t("admin.ceoBio")} value={missionForm.ceoBio} onChange={(v) => setMissionForm({ ...missionForm, ceoBio: v })} type="textarea" />
                 <BilingualField label={t("admin.ceoQuote")} value={missionForm.ceoQuote} onChange={(v) => setMissionForm({ ...missionForm, ceoQuote: v })} type="textarea" />
+
+                {/* Photo Gallery Carousel */}
+                <div>
+                  <label className="block text-xs font-bold uppercase text-emerald-955/50 mb-1">{t("admin.missionPhotoGallery")}</label>
+                  <p className="text-[10px] text-emerald-950/40 mb-2">{t("admin.missionGalleryDesc")}</p>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {missionForm.photos.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <img src={url} alt="" className="w-24 h-24 object-cover rounded-lg border" />
+                        <button
+                          type="button"
+                          onClick={() => setMissionForm({ ...missionForm, photos: missionForm.photos.filter((_, i) => i !== idx) })}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://example.com/photo.jpg"
+                      id="photoUrlInput"
+                      className="flex-1 p-2 bg-[#fcfbfa] border border-emerald-955/15 rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById("photoUrlInput");
+                        const url = input?.value?.trim();
+                        if (!url) return;
+                        setMissionForm({ ...missionForm, photos: [...missionForm.photos, url] });
+                        if (input) input.value = "";
+                      }}
+                      className="px-3 py-2 bg-emerald-900/5 hover:bg-emerald-900/10 text-emerald-900 rounded-lg text-xs font-semibold whitespace-nowrap"
+                    >
+                      + {t("admin.addPhotoUrl")}
+                    </button>
+                    <label className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
+                      <Upload className="w-3 h-3" /> {t("admin.upload")}
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
+                          const data = await res.json();
+                          if (data.success) {
+                            setMissionForm({ ...missionForm, photos: [...missionForm.photos, data.url] });
+                            showFeedback("success", t("admin.feedbackImageUploaded"));
+                          } else {
+                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
+                          }
+                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      }} />
+                    </label>
+                  </div>
+                </div>
                 
                 {/* Sections loop */}
                 <div className="flex flex-col gap-3 mt-2">
@@ -1818,8 +1894,9 @@ export default function AdminDashboardContent({
                                   const loc = (v) => { try { const p = typeof v === "string" ? JSON.parse(v) : v; return p?.[locale] || p?.en || ""; } catch { return v || ""; } };
                                   const qText = (q) => q?.question ? loc(q.question) : loc(q);
                                   const pairs = [];
-                                  if (a.q1 || a.usage) pairs.push({ q: qText(q1) || (a.usage ? t("admin.defaultQ1") : ""), a: a.q1 || a.usage || "" });
-                                  if (a.q2 || a.reason) pairs.push({ q: qText(q2) || (a.reason ? t("admin.defaultQ2") : ""), a: a.q2 || a.reason || "" });
+                                  const fmt = (v) => Array.isArray(v) ? v.join(", ") : (v || "");
+                                  if (a.q1 || a.usage) pairs.push({ q: qText(q1) || (a.usage ? t("admin.defaultQ1") : ""), a: fmt(a.q1 || a.usage) });
+                                  if (a.q2 || a.reason) pairs.push({ q: qText(q2) || (a.reason ? t("admin.defaultQ2") : ""), a: fmt(a.q2 || a.reason) });
                                   return pairs.filter(p => p.q || p.a).map((p, i) => (
                                     <div key={i} className="text-xs">
                                       <span className="font-semibold text-emerald-950/70">{p.q}</span>
@@ -1865,10 +1942,254 @@ export default function AdminDashboardContent({
             <UsersList t={t} users={users} />
           )}
 
+          {activeTab === "faq" && (
+            <FaqManager t={t} showFeedback={showFeedback} />
+          )}
+
+          {activeTab === "reviews" && (
+            <ReviewsManager t={t} showFeedback={showFeedback} />
+          )}
+
         </div>
 
       </div>
 
+    </div>
+  );
+}
+
+// FAQ Manager Component
+function FaqManager({ t, showFeedback }) {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newCatName, setNewCatName] = useState({ en: "", az: "" });
+  const [editingCat, setEditingCat] = useState(null);
+  const [newQuestion, setNewQuestion] = useState({ categoryId: "", question: { en: "", az: "" }, answer: { en: "", az: "" } });
+
+  const loadFaq = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/faq`, { cache: "no-store" });
+      const data = await res.json();
+      setCategories(data || []);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadFaq(); }, []);
+
+  const handleAddCategory = async () => {
+    if (!newCatName.en.trim()) return;
+    try {
+      await createFaqCategory(newCatName);
+      showFeedback("success", "Category added");
+      setNewCatName({ en: "", az: "" });
+      loadFaq();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!confirm(t("admin.faqDeleteCategory"))) return;
+    try {
+      await deleteFaqCategory(id);
+      showFeedback("success", "Category deleted");
+      loadFaq();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  const handleAddQuestion = async () => {
+    if (!newQuestion.question.en.trim() || !newQuestion.categoryId) return;
+    try {
+      await createFaqQuestion(newQuestion.categoryId, newQuestion.question, newQuestion.answer);
+      showFeedback("success", "Question added");
+      setNewQuestion({ categoryId: "", question: { en: "", az: "" }, answer: { en: "", az: "" } });
+      loadFaq();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  const handleDeleteQuestion = async (id) => {
+    if (!confirm(t("admin.faqDeleteQuestion"))) return;
+    try {
+      await deleteFaqQuestion(id);
+      showFeedback("success", "Question deleted");
+      loadFaq();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  if (loading) return <p className="text-emerald-950/40">{t("admin.loading")}</p>;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h3 className="text-xl font-serif text-emerald-950 font-bold">{t("admin.faqTitle")}</h3>
+        <p className="text-sm text-emerald-950/60 mt-1">{t("admin.faqDesc")}</p>
+      </div>
+
+      {/* Add Category */}
+      <div className="bg-white rounded-2xl border border-emerald-950/5 p-5 flex flex-col gap-3">
+        <span className="text-xs font-bold uppercase text-emerald-950/40">{t("admin.faqAddCategory")}</span>
+        <div className="flex gap-2">
+          <input value={newCatName.en} onChange={(e) => setNewCatName({ ...newCatName, en: e.target.value })} placeholder="EN" className="flex-1 p-2 bg-[#fcfbfa] border rounded-lg text-sm" />
+          <input value={newCatName.az} onChange={(e) => setNewCatName({ ...newCatName, az: e.target.value })} placeholder="AZ" className="flex-1 p-2 bg-[#fcfbfa] border rounded-lg text-sm" />
+          <button onClick={handleAddCategory} className="px-4 py-2 bg-emerald-900 text-white rounded-lg text-xs font-semibold whitespace-nowrap">+ {t("admin.faqAddCategory")}</button>
+        </div>
+      </div>
+
+      {/* Categories */}
+      {categories.length === 0 && <p className="text-emerald-950/40">{t("admin.faqNoCategories")}</p>}
+
+      {categories.map((cat) => (
+        <div key={cat.id} className="bg-white rounded-2xl border border-emerald-950/5 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-serif font-semibold text-emerald-950">{cat.name?.en || cat.name?.az || ""}</h4>
+            <button onClick={() => handleDeleteCategory(cat.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Existing questions */}
+          {cat.questions?.length > 0 ? (
+            <div className="flex flex-col gap-2 mb-4">
+              {cat.questions.map((q) => (
+                <div key={q.id} className="flex items-start gap-3 p-3 bg-[#fcfbfa] rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-emerald-950">{q.question?.en || ""}</p>
+                    <p className="text-xs text-emerald-950/60 mt-0.5">{q.answer?.en || ""}</p>
+                  </div>
+                  <button onClick={() => handleDeleteQuestion(q.id)} className="p-1 text-red-400 hover:text-red-600 shrink-0">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-emerald-950/40 mb-4">{t("admin.faqNoQuestions")}</p>
+          )}
+
+          {/* Add Question to this category */}
+          <details className="mt-2">
+            <summary className="text-xs font-semibold text-emerald-700 cursor-pointer hover:text-emerald-600">{t("admin.faqAddQuestion")}</summary>
+            <div className="flex flex-col gap-2 mt-3">
+              <input placeholder={`${t("admin.faqQuestion")} (EN)`} value={newQuestion.question.en} onChange={(e) => setNewQuestion({ ...newQuestion, categoryId: cat.id, question: { ...newQuestion.question, en: e.target.value } })} className="p-2 bg-[#fcfbfa] border rounded-lg text-sm" />
+              <input placeholder={`${t("admin.faqQuestion")} (AZ)`} value={newQuestion.question.az} onChange={(e) => setNewQuestion({ ...newQuestion, categoryId: cat.id, question: { ...newQuestion.question, az: e.target.value } })} className="p-2 bg-[#fcfbfa] border rounded-lg text-sm" />
+              <textarea placeholder={`${t("admin.faqAnswer")} (EN)`} value={newQuestion.answer.en} onChange={(e) => setNewQuestion({ ...newQuestion, categoryId: cat.id, answer: { ...newQuestion.answer, en: e.target.value } })} className="p-2 bg-[#fcfbfa] border rounded-lg text-sm resize-none" rows={2} />
+              <textarea placeholder={`${t("admin.faqAnswer")} (AZ)`} value={newQuestion.answer.az} onChange={(e) => setNewQuestion({ ...newQuestion, categoryId: cat.id, answer: { ...newQuestion.answer, az: e.target.value } })} className="p-2 bg-[#fcfbfa] border rounded-lg text-sm resize-none" rows={2} />
+              <button onClick={handleAddQuestion} className="self-start px-4 py-1.5 bg-emerald-900/5 hover:bg-emerald-900/10 text-emerald-900 rounded-lg text-xs font-semibold">+ {t("admin.faqAddQuestion")}</button>
+            </div>
+          </details>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Reviews Manager Component
+function ReviewsManager({ t, showFeedback }) {
+  const [reviews, setReviews] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [ratingFilter, setRatingFilter] = useState("");
+  const [search, setSearch] = useState("");
+
+  const loadReviews = async () => {
+    setLoading(true);
+    try {
+      const data = await getReviews({ limit: 50, all: true, rating: ratingFilter || undefined, search: search || undefined });
+      let list = data.reviews || [];
+      if (filter === "visible") list = list.filter(r => !r.hidden);
+      else if (filter === "hidden") list = list.filter(r => r.hidden);
+      setReviews(list);
+      setTotal(data.total || 0);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadReviews(); }, [filter, ratingFilter, search]);
+
+  const handleToggle = async (id, currentHidden) => {
+    try {
+      await updateReview(id, { hidden: !currentHidden });
+      showFeedback("success", t("admin.reviewsToggleSuccess"));
+      loadReviews();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm(t("admin.reviewsConfirmDelete"))) return;
+    try {
+      await deleteReview(id);
+      showFeedback("success", t("admin.reviewsDeleteSuccess"));
+      loadReviews();
+    } catch (e) { showFeedback("error", "Failed"); }
+  };
+
+  if (loading) return <p className="text-emerald-950/40">{t("admin.loading")}</p>;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h3 className="text-xl font-serif text-emerald-950 font-bold">{t("admin.reviewsTitle")}</h3>
+        <p className="text-sm text-emerald-950/60 mt-1">{t("admin.reviewsDesc")}</p>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex gap-1 bg-white border border-emerald-950/10 rounded-xl p-1">
+          {["all", "visible", "hidden"].map((f) => (
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${filter === f ? "bg-emerald-900 text-white" : "text-emerald-950/60 hover:text-emerald-900"}`}>
+              {f === "all" ? t("admin.reviewsAll") : f === "visible" ? t("admin.reviewsVisible") : t("admin.reviewsHidden")}
+            </button>
+          ))}
+        </div>
+        <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className="p-2 bg-white border border-emerald-950/10 rounded-xl text-xs font-semibold">
+          <option value="">{t("admin.reviewsFilterRating")}</option>
+          {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} ★</option>)}
+        </select>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("admin.reviewsSearch")} className="flex-1 min-w-[160px] p-2 bg-white border border-emerald-950/10 rounded-xl text-xs" />
+      </div>
+
+      {/* Stats */}
+      <div className="flex gap-6 text-sm">
+        <span className="text-emerald-950/60">{t("reviews.totalReviews")}: <strong className="text-emerald-950">{total}</strong></span>
+      </div>
+
+      {/* Reviews List */}
+      {reviews.length === 0 ? (
+        <p className="text-emerald-950/40 py-8">{t("admin.reviewsNoResults")}</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {reviews.map((r) => (
+            <div key={r.id} className={`bg-white rounded-2xl border p-4 flex flex-col gap-2 ${r.hidden ? "border-red-200 opacity-60" : "border-emerald-950/5"}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-sm font-bold text-emerald-800">{r.userName?.charAt(0) || "?"}</div>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-950">{r.userName}</p>
+                    <p className="text-[10px] text-emerald-950/40">{new Date(r.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-emerald-900/20"}`} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-emerald-950/70 ml-11">{r.text}</p>
+              <div className="flex gap-2 ml-11">
+                <button onClick={() => handleToggle(r.id, r.hidden)} className={`px-3 py-1 rounded-lg text-[10px] font-semibold transition-colors ${r.hidden ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"}`}>
+                  {r.hidden ? t("admin.reviewsShow") : t("admin.reviewsHide")}
+                </button>
+                <button onClick={() => handleDelete(r.id)} className="px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-[10px] font-semibold transition-colors">
+                  {t("admin.reviewsDelete")}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

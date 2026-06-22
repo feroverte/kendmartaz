@@ -42,6 +42,7 @@ export default function Navbar() {
     { name: t("nav.research"), href: "/research" },
     { name: t("nav.articles"), href: "/blog" },
     { name: t("nav.market"), href: "/market" },
+    { name: t("nav.faq"), href: "/faq-reviews" },
   ];
 
   const isActive = (path) => pathname === path;
@@ -56,22 +57,22 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <img src="/images/logo.png" alt="KendMart" className="h-14 w-auto" />
-          <span className="text-xl font-bold font-serif-display tracking-tight text-emerald-950 leading-none">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <img src="/images/logo.png" alt="KendMart" className="h-11 w-auto" />
+          <span className="text-lg font-bold font-serif-display tracking-tight text-emerald-950 leading-none">
             KendMart
           </span>
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium tracking-tight transition-colors duration-200 relative py-1 ${
+              className={`text-xs font-semibold tracking-tight transition-colors duration-200 relative py-1 ${
                 isActive(link.href)
-                  ? "text-emerald-900 font-semibold"
+                  ? "text-emerald-900"
                   : "text-emerald-950/70 hover:text-emerald-900"
               }`}
             >
@@ -85,7 +86,7 @@ export default function Navbar() {
           {/* Language Toggle */}
           <button
             onClick={() => { toggleLocale(); router.refresh(); }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 bg-emerald-900/10 hover:bg-emerald-900/20 text-emerald-900 border border-emerald-900/15"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-200 bg-emerald-900/10 hover:bg-emerald-900/20 text-emerald-900 border border-emerald-900/15"
             title={locale === "en" ? t("language.azerbaijani") : t("language.english")}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -96,9 +97,9 @@ export default function Navbar() {
           {user ? (
             <Link
               href="/profile"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 bg-emerald-900/10 hover:bg-emerald-900/20 text-emerald-900 border border-emerald-900/15"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 bg-emerald-900/10 hover:bg-emerald-900/20 text-emerald-900 border border-emerald-900/15"
             >
-              <div className="w-6 h-6 rounded-full bg-emerald-800 flex items-center justify-center text-emerald-200 text-[10px] font-bold">
+              <div className="w-5 h-5 rounded-full bg-emerald-800 flex items-center justify-center text-emerald-200 text-[9px] font-bold">
                 {user.name?.charAt(0) || "U"}
               </div>
               {user.name?.split(" ")[0]}
@@ -106,9 +107,9 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 bg-emerald-900/5 hover:bg-emerald-900/10 text-emerald-900"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 bg-emerald-900/5 hover:bg-emerald-900/10 text-emerald-900"
             >
-              <User className="w-4 h-4" />
+              <User className="w-3.5 h-3.5" />
               {t("nav.signIn")}
             </Link>
           )}

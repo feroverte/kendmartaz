@@ -6,10 +6,18 @@ import PublicResearchContent from "@/components/PublicResearchContent";
 
 export const revalidate = 0;
 
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default async function ResearchPage() {
   const locale = await getServerLocale();
   const data = await getDatasets(true);
   const { datasets, settings } = data || { datasets: [], settings: {} };
+
+  let userCount = 0;
+  try {
+    const res = await fetch(`${API}/api/users/count`, { cache: "no-store" });
+    if (res.ok) { const j = await res.json(); userCount = j.count || 0; }
+  } catch {}
 
   return (
     <div className="pt-24 pb-16">
@@ -27,7 +35,7 @@ export default async function ResearchPage() {
           </p>
         </div>
 
-        <PublicResearchContent datasets={datasets} settings={settings} />
+        <PublicResearchContent datasets={datasets} settings={settings} userCount={userCount} />
       </div>
     </div>
   );

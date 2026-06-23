@@ -29,7 +29,7 @@ const INSIGHT_COLORS = {
   recommendation: "border-purple-200 bg-purple-50"
 };
 
-export default function PublicResearchContent({ datasets, settings }) {
+export default function PublicResearchContent({ datasets, settings, userCount }) {
   const { locale } = useLocale();
   const t = useTranslations();
   const [expandedDataset, setExpandedDataset] = useState(null);
@@ -120,7 +120,7 @@ export default function PublicResearchContent({ datasets, settings }) {
   return (
     <div className="flex flex-col gap-16">
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950 to-emerald-900 text-white text-center">
           <Database className="w-6 h-6 text-green-400 mx-auto mb-2" />
           <p className="text-2xl font-bold font-numeric">{datasets.length}</p>
@@ -140,6 +140,11 @@ export default function PublicResearchContent({ datasets, settings }) {
           <Target className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
           <p className="text-2xl font-bold font-numeric text-emerald-950">{settings?.total_impact_points || "0"}</p>
           <p className="text-[10px] text-emerald-700 font-semibold uppercase mt-1">{t("research.impactPoints")}</p>
+        </div>
+        <div className="p-5 rounded-2xl bg-white border border-emerald-950/5 text-center shadow-sm">
+          <Users className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+          <p className="text-2xl font-bold font-numeric text-emerald-950">{userCount}</p>
+          <p className="text-[10px] text-emerald-700 font-semibold uppercase mt-1">{t("research.registeredUsers")}</p>
         </div>
       </div>
 

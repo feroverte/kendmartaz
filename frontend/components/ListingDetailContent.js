@@ -59,15 +59,12 @@ export default function ListingDetailContent({ listing }) {
 
   const isQuestionDisabled = () => {
     if (listing.question1 && listing.question1.options) {
-      const checkQ = (key) => {
-        const otherActive = answers[`${key}OtherActive`];
-        if (otherActive) return !answers[`${key}Other`];
-        return !answers[key] || answers[key].length === 0;
-      };
-      return checkQ("q1") || checkQ("q2");
+      const otherActive = answers["q1OtherActive"];
+      if (otherActive) return !answers["q1Other"];
+      return !answers.q1 || answers.q1.length === 0;
     }
-    if (listing.question1) return !answers.q1 || !answers.q2;
-    return !answers.usage || answers.usage.length === 0 || !answers.reason || answers.reason.length === 0;
+    if (listing.question1) return !answers.q1;
+    return !answers.usage || answers.usage.length === 0;
   };
 
   // Full-screen gallery state
@@ -151,18 +148,15 @@ export default function ListingDetailContent({ listing }) {
     setAnswerError("");
     let payload = { ...answers };
     if (listing.question1 && listing.question1.options) {
-      [1, 2].forEach(i => {
-        const key = `q${i}`;
-        const otherKey = `${key}Other`;
-        const otherActive = answers[`${key}OtherActive`];
-        const arr = payload[key] || [];
-        if (otherActive) {
-          arr.push(payload[otherKey] || "");
-        }
-        payload[key] = arr;
-        delete payload[otherKey];
-        delete payload[`${key}OtherActive`];
-      });
+      const key = "q1";
+      const otherActive = answers["q1OtherActive"];
+      const arr = payload[key] || [];
+      if (otherActive) {
+        arr.push(payload["q1Other"] || "");
+      }
+      payload[key] = arr;
+      delete payload["q1Other"];
+      delete payload["q1OtherActive"];
     }
     setContactLoading(true);
     const res = await submitListingAnswer(listing.id, payload);
@@ -352,16 +346,15 @@ export default function ListingDetailContent({ listing }) {
 
                 {listing.question1 && listing.question1.options ? (
                   <>
-                    {[1, 2].map((qIdx) => {
-                      const qData = listing[`question${qIdx}`];
-                      if (!qData) return null;
+                    {(() => {
+                      const qData = listing.question1;
                       const qText = loc(qData.question);
-                      const qKey = `q${qIdx}`;
+                      const qKey = "q1";
                       const opts = qData.options || [];
                       const selected = answers[qKey] || [];
-                      const otherActive = answers[`${qKey}OtherActive`];
+                      const otherActive = answers["q1OtherActive"];
                       return (
-                        <div key={qIdx} className={qIdx === 1 ? "mb-6" : "mb-5"}>
+                        <div className="mb-6">
                           <p className="text-sm font-semibold text-emerald-950 mb-3">{qText}</p>
                           <div className="flex flex-col gap-2">
                             {opts.map((opt, optIdx) => {
@@ -382,13 +375,13 @@ export default function ListingDetailContent({ listing }) {
                                       <input
                                         type="text"
                                         maxLength={100}
-                                        value={answers[`${qKey}Other`] || ""}
+                                        value={answers["q1Other"] || ""}
                                         onChange={(e) => {
                                           const newText = e.target.value;
                                           setAnswers(a => ({
                                             ...a,
-                                            [`${qKey}Other`]: newText,
-                                            [qKey]: [...(a[qKey] || []).filter(t => t !== a[`${qKey}Other`] && t !== ""), newText]
+                                            ["q1Other"]: newText,
+                                            ["q1"]: [...(a["q1"] || []).filter(t => t !== a["q1Other"] && t !== ""), newText]
                                           }));
                                         }}
                                         placeholder={t("listing.otherPlaceholder")}
@@ -414,22 +407,18 @@ export default function ListingDetailContent({ listing }) {
                           </div>
                         </div>
                       );
-                    })}
+                    })()}
                   </>
                 ) : listing.question1 ? (
                   <>
-                    <div className="mb-5">
+                    <div className="mb-6">
                       <p className="text-sm font-semibold text-emerald-950 mb-3">{loc(listing.question1)}</p>
                       <textarea value={answers.q1 || ""} onChange={(e) => setAnswers(a => ({ ...a, q1: e.target.value }))} className="w-full p-3 bg-white border border-emerald-200/50 rounded-xl text-sm resize-none" rows={3} placeholder={t("listing.answerPlaceholder")} />
-                    </div>
-                    <div className="mb-6">
-                      <p className="text-sm font-semibold text-emerald-950 mb-3">{loc(listing.question2)}</p>
-                      <textarea value={answers.q2 || ""} onChange={(e) => setAnswers(a => ({ ...a, q2: e.target.value }))} className="w-full p-3 bg-white border border-emerald-200/50 rounded-xl text-sm resize-none" rows={3} placeholder={t("listing.answerPlaceholder")} />
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="mb-5">
+                    <div className="mb-6">
                       <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qUsage")}</p>
                       <div className="flex flex-col gap-2">
                         {t("listing.qOptionsUsage").split("|").map((opt, i) => (
@@ -438,22 +427,6 @@ export default function ListingDetailContent({ listing }) {
                               type="checkbox"
                               checked={(answers.usage || []).includes(opt)}
                               onChange={() => toggleOption("usage", opt)}
-                              className="w-4 h-4 accent-emerald-700"
-                            />
-                            <span className="text-sm text-emerald-950/70">{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mb-6">
-                      <p className="text-sm font-semibold text-emerald-950 mb-3">{t("listing.qReason")}</p>
-                      <div className="flex flex-col gap-2">
-                        {t("listing.qOptionsReason").split("|").map((opt, i) => (
-                          <label key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all bg-white border-emerald-200/50 hover:border-emerald-300">
-                            <input
-                              type="checkbox"
-                              checked={(answers.reason || []).includes(opt)}
-                              onChange={() => toggleOption("reason", opt)}
                               className="w-4 h-4 accent-emerald-700"
                             />
                             <span className="text-sm text-emerald-950/70">{opt}</span>

@@ -435,6 +435,7 @@ const en = {
   "research.totalRecords": "Total Records",
   "research.farmersEngaged": "Farmers Engaged",
   "research.impactPoints": "Impact Points",
+  "research.registeredUsers": "Registered Users",
   "research.downloadCsv": "Download CSV",
 
   // Survey

@@ -231,7 +231,8 @@ export const db = {
     findMany: () => prisma.user.findMany(),
     findUnique: (args) => prisma.user.findUnique(args),
     create: (args) => prisma.user.create(args),
-    update: (args) => prisma.user.update(args)
+    update: (args) => prisma.user.update(args),
+    count: () => prisma.user.count()
   },
   dataset: {
     findMany: (args) => prisma.dataset.findMany({ ...args, orderBy: { createdAt: 'desc' } }),

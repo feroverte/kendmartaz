@@ -621,6 +621,16 @@ app.get("/api/user/dashboard-stats", authenticateUser, async (req, res) => {
   }
 });
 
+// Public user count
+app.get("/api/users/count", async (req, res) => {
+  try {
+    const count = await db.user.count();
+    return res.json({ count });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/users", authenticateAdmin, async (req, res) => {
   try {
     const users = await db.user.findMany({ orderBy: { createdAt: "desc" } });
@@ -728,29 +738,23 @@ app.delete("/api/listings/:id", authenticateAdmin, async (req, res) => {
   }
 });
 
-// Always show questions when contacting a farmer
+// Always show questions when contacting a farmer (only 1 question)
 app.post("/api/listings/:id/contact", authenticateUser, async (req, res) => {
   const { id } = req.params;
   try {
     const listing = await db.listing.findUnique({ where: { id } });
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    const hasCustomQuestions = listing.question1 && listing.question2;
+    const hasCustomQuestions = listing.question1;
     return res.json({
       completed: false,
       questions: hasCustomQuestions ? [
-        { id: "q1", label: listing.question1, options: [] },
-        { id: "q2", label: listing.question2, options: [] }
+        { id: "q1", label: listing.question1, options: [] }
       ] : [
         {
           id: "usage",
           label: "How do you plan to use this product?",
           options: ["Personal consumption", "Family & household", "Gift / sharing", "Resale", "Other"]
-        },
-        {
-          id: "reason",
-          label: "What is your main reason for choosing local?",
-          options: ["Support local farmers", "Better quality / freshness", "Environmental concerns", "Lower carbon footprint", "Price"]
         }
       ]
     });

@@ -435,6 +435,7 @@ const az = {
   "research.totalRecords": "Ümumi Qeydlər",
   "research.farmersEngaged": "Cəlb Olunan Fermerlər",
   "research.impactPoints": "Təsir Xalı",
+  "research.registeredUsers": "Qeydiyyatdan Keçən İstifadəçilər",
   "research.downloadCsv": "CSV Yüklə",
 
   // Survey

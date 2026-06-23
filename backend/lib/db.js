@@ -230,6 +230,7 @@ export const db = {
   user: {
     findMany: () => prisma.user.findMany(),
     findUnique: (args) => prisma.user.findUnique(args),
+    findFirst: (args) => prisma.user.findFirst(args),
     create: (args) => prisma.user.create(args),
     update: (args) => prisma.user.update(args),
     count: () => prisma.user.count()

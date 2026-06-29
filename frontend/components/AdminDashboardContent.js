@@ -420,9 +420,9 @@ export default function AdminDashboardContent({
     e.preventDefault();
     let updated;
     if (extArticleForm.id) {
-      updated = externalArticles.map(a => a.id === extArticleForm.id ? { ...a, title: extArticleForm.title, url: extArticleForm.url, description: extArticleForm.description, imageUrl: extArticleForm.imageUrl } : a);
+      updated = externalArticles.map(a => a.id === extArticleForm.id ? { ...a, title: typeof extArticleForm.title === "object" ? JSON.stringify(extArticleForm.title) : extArticleForm.title, url: extArticleForm.url, description: typeof extArticleForm.description === "object" ? JSON.stringify(extArticleForm.description) : extArticleForm.description, imageUrl: extArticleForm.imageUrl } : a);
     } else {
-      const newArt = { id: Date.now().toString(), title: extArticleForm.title, url: extArticleForm.url, description: extArticleForm.description, imageUrl: extArticleForm.imageUrl };
+      const newArt = { id: Date.now().toString(), title: typeof extArticleForm.title === "object" ? JSON.stringify(extArticleForm.title) : extArticleForm.title, url: extArticleForm.url, description: typeof extArticleForm.description === "object" ? JSON.stringify(extArticleForm.description) : extArticleForm.description, imageUrl: extArticleForm.imageUrl };
       updated = [...externalArticles, newArt];
     }
     try {
@@ -437,7 +437,11 @@ export default function AdminDashboardContent({
   };
 
   const handleEditExtArticle = (art) => {
-    setExtArticleForm(art);
+    setExtArticleForm({
+      ...art,
+      title: parseBilingualField(art.title),
+      description: parseBilingualField(art.description)
+    });
     setIsExtArticleEditing(true);
   };
 
@@ -997,10 +1001,10 @@ export default function AdminDashboardContent({
                   {articles.map(art => (
                     <div key={art.id} className="p-4 border border-emerald-950/5 rounded-2xl flex items-center justify-between gap-4 bg-[#fcfbfa]">
                       <div className="flex items-center gap-3">
-                        <img src={art.imageUrl} alt={art.title} className="w-16 h-12 object-cover rounded-lg border" />
+                        <img src={art.imageUrl} alt={loc(art.title)} className="w-16 h-12 object-cover rounded-lg border" />
                         <div>
-                          <h4 className="font-semibold text-emerald-950 line-clamp-1">{art.title}</h4>
-                          <p className="text-xs text-emerald-955/50 line-clamp-1 mt-0.5">{art.summary}</p>
+                          <h4 className="font-semibold text-emerald-950 line-clamp-1">{loc(art.title)}</h4>
+                          <p className="text-xs text-emerald-955/50 line-clamp-1 mt-0.5">{loc(art.summary)}</p>
                         </div>
                       </div>
 
@@ -1098,12 +1102,12 @@ export default function AdminDashboardContent({
                         <div key={art.id} className="p-4 border border-emerald-950/5 rounded-2xl flex items-center justify-between gap-4 bg-[#fcfbfa]">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             {art.imageUrl && (
-                              <img src={art.imageUrl} alt={art.title} className="w-14 h-14 object-cover rounded-xl shrink-0 border" />
+                              <img src={art.imageUrl} alt={loc(art.title)} className="w-14 h-14 object-cover rounded-xl shrink-0 border" />
                             )}
                             <div className="min-w-0">
-                              <h4 className="font-semibold text-emerald-950 truncate">{art.title}</h4>
+                              <h4 className="font-semibold text-emerald-950 truncate">{loc(art.title)}</h4>
                               <p className="text-xs text-emerald-950/50 truncate mt-0.5">{art.url}</p>
-                              <p className="text-xs text-emerald-950/70 line-clamp-2 mt-1">{art.description}</p>
+                              <p className="text-xs text-emerald-950/70 line-clamp-2 mt-1">{loc(art.description)}</p>
                             </div>
                           </div>
                           <div className="flex gap-2 shrink-0">

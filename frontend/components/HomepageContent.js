@@ -17,12 +17,14 @@ import {
   ChevronRight, 
   ShieldCheck, 
   X,
-  Sparkles
+  Sparkles,
+  Play
 } from "lucide-react";
 import AnimatedCounter from "./AnimatedCounter";
 import { createRequest } from "@/app/actions/dbActions";
 import confetti from "canvas-confetti";
 import { useTranslations } from "@/hooks/useTranslations";
+import VideoPlayer from "./VideoPlayer";
 
 function ht(value, locale) {
   if (!value && value !== 0 && value !== "") return "";
@@ -319,6 +321,25 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
           </div>
         </div>
       </section>
+
+      {/* 1.5 EXPLAINER VIDEO SECTION */}
+      {(pc.videoUrl) && (
+        <section className="py-16 px-6 md:px-12 max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            {(pc.videoTitle) && (
+              <h2 className="text-2xl md:text-3xl font-serif text-emerald-950 font-bold">
+                {_t(pc.videoTitle) || t("home.videoTitle")}
+              </h2>
+            )}
+            {(pc.videoDescription) && (
+              <p className="text-sm text-emerald-950/70 mt-2 max-w-2xl mx-auto">
+                {_t(pc.videoDescription) || t("home.videoDesc")}
+              </p>
+            )}
+          </div>
+          <VideoPlayer src={pc.videoUrl} />
+        </section>
+      )}
 
       {/* 2. MEET OUR FARMERS SECTION */}
       <section id="farmers-section" className="py-24 px-6 md:px-12 max-w-7xl mx-auto scroll-mt-24">

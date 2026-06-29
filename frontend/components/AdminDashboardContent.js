@@ -157,6 +157,9 @@ export default function AdminDashboardContent({
   
   // Pages forms state
   const [missionForm, setMissionForm] = useState({
+    videoUrl: initialMissionPage?.videoUrl || "",
+    videoTitle: b64default(initialMissionPage?.videoTitle, "CEO Message on Our Climate Mission", "İqlim Missiyamız Haqqında CEO Mesajı"),
+    videoDescription: b64default(initialMissionPage?.videoDescription, "Hear from our founder about why regenerative agriculture matters and how KendMart is making a difference.", "Qurucumuzdan regenerativ kənd təsərrüfatının niyə vacib olduğunu və KendMart-ın necə fərq yaratdığını dinləyin."),
     heroTitle: b64default(initialMissionPage?.heroTitle, "Our Climate Mission", "İqlim Missiyamız"),
     heroSub: b64default(initialMissionPage?.heroSub, "Rebuilding a sustainable connection between communities and land.", "İcma və torpaq arasında davamlı bir əlaqə qurmaq."),
     ceoPhoto: initialMissionPage?.ceoPhoto || "",
@@ -184,6 +187,9 @@ export default function AdminDashboardContent({
     stats: Array.isArray(initialResearchPage?.stats) ? initialResearchPage.stats.map(s => bilingualify(s, ["label"])) : []
   });
   const [homeForm, setHomeForm] = useState({
+    videoUrl: initialHomePage?.videoUrl || "",
+    videoTitle: b64default(initialHomePage?.videoTitle, "How KendMart Works", "KendMart Necə İşləyir"),
+    videoDescription: b64default(initialHomePage?.videoDescription, "Watch our short explainer video to learn how you can support local farmers, reduce food miles, and earn climate impact points.", "Qısa izahat videomuzu izləyərək yerli fermerləri necə dəstəkləyə biləcəyinizi, qida millərini necə azalda biləcəyinizi və iqlim təsir xalları qazana biləcəyinizi öyrənin."),
     heroTag: b64default(initialHomePage?.heroTag, "Empowering Regenerative Azerbaijani Farms", "Gücləndirici Regenerativ Azərbaycan Təsərrüfatları"),
     heroTitle: b64default(initialHomePage?.heroTitle, "KendMart: Supporting Sustainable Farmers and Climate-Resilient Communities", "KendMart: Davamlı Fermerləri və İqlimə Davamlı Cəmiyyətləri Dəstəkləmək"),
     heroSub: b64default(initialHomePage?.heroSub, "Connecting consumers with local farmers while creating measurable environmental impact. Request fresh produce directly, regenerate soil health, and slash global food transport emissions.", "İstehlakçıları yerli fermerlərlə birləşdirərək ölçülə bilən ekoloji təsir yaradın. Təzə məhsulları birbaşa sifariş edin, torpaq sağlamlığını bərpa edin və qlobal qida nəqliyyatı emissiyalarını azaldın."),
@@ -1412,6 +1418,42 @@ export default function AdminDashboardContent({
                   </div>
                 </div>
                 
+                {/* Video Section */}
+                <span className="text-xs font-bold text-emerald-950/40 uppercase mt-2">{t("admin.missionVideoSection")}</span>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.videoUrl")}</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t("admin.videoUrlPlaceholder")}
+                      value={missionForm.videoUrl || ""}
+                      onChange={(e) => setMissionForm({ ...missionForm, videoUrl: e.target.value })}
+                      className="flex-1 p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm"
+                    />
+                    <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
+                      <Upload className="w-3 h-3" /> {t("admin.upload")}
+                      <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
+                          const data = await res.json();
+                          if (data.success) {
+                            setMissionForm({ ...missionForm, videoUrl: data.url });
+                            showFeedback("success", t("admin.feedbackImageUploaded"));
+                          } else {
+                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
+                          }
+                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      }} />
+                    </label>
+                  </div>
+                </div>
+                <BilingualField label={t("admin.videoTitle")} value={missionForm.videoTitle} onChange={(v) => setMissionForm({ ...missionForm, videoTitle: v })} />
+                <BilingualField label={t("admin.videoDescription")} value={missionForm.videoDescription} onChange={(v) => setMissionForm({ ...missionForm, videoDescription: v })} type="textarea" rows={2} />
+
                 {/* Sections loop */}
                 <div className="flex flex-col gap-3 mt-2">
                   <span className="text-xs font-bold text-emerald-950/40 uppercase">{t("admin.pillarCards")}</span>
@@ -1480,6 +1522,42 @@ export default function AdminDashboardContent({
                 <BilingualField label={t("admin.tag")} value={homeForm.heroTag} onChange={(v) => handleHomeField("heroTag", v)} />
                 <BilingualField label={t("admin.title")} value={homeForm.heroTitle} onChange={(v) => handleHomeField("heroTitle", v)} />
                 <BilingualField label={t("admin.subheading")} value={homeForm.heroSub} onChange={(v) => handleHomeField("heroSub", v)} type="textarea" />
+
+                {/* Video Section */}
+                <span className="text-xs font-bold text-emerald-950/40 uppercase mt-2">{t("admin.videoSection")}</span>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-emerald-950/60 mb-1">{t("admin.videoUrl")}</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t("admin.videoUrlPlaceholder")}
+                      value={homeForm.videoUrl || ""}
+                      onChange={(e) => handleHomeField("videoUrl", e.target.value)}
+                      className="flex-1 p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm"
+                    />
+                    <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
+                      <Upload className="w-3 h-3" /> {t("admin.upload")}
+                      <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
+                          const data = await res.json();
+                          if (data.success) {
+                            handleHomeField("videoUrl", data.url);
+                            showFeedback("success", t("admin.feedbackImageUploaded"));
+                          } else {
+                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
+                          }
+                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      }} />
+                    </label>
+                  </div>
+                </div>
+                <BilingualField label={t("admin.videoTitle")} value={homeForm.videoTitle} onChange={(v) => handleHomeField("videoTitle", v)} />
+                <BilingualField label={t("admin.videoDescription")} value={homeForm.videoDescription} onChange={(v) => handleHomeField("videoDescription", v)} type="textarea" rows={2} />
 
                 {/* Farmer Section */}
                 <span className="text-xs font-bold text-emerald-950/40 uppercase mt-2">{t("admin.farmerSection")}</span>

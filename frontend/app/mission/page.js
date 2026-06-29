@@ -3,6 +3,7 @@ import { getPageContent } from "@/app/actions/dbActions";
 import { Leaf, Sprout, Globe, Heart, ShieldCheck } from "lucide-react";
 import { getServerLocale, serverT, localizeText } from "@/lib/serverLocale";
 import ImageCarousel from "@/components/ImageCarousel";
+import VideoPlayer from "@/components/VideoPlayer";
 
 export const revalidate = 0;
 
@@ -16,6 +17,8 @@ export default async function MissionPage() {
   const ceoName = localizeText(pageData?.ceoName, locale) || serverT(locale, "mission.ceoName");
   const ceoBio = localizeText(pageData?.ceoBio, locale) || serverT(locale, "mission.ceoBio");
   const ceoQuote = localizeText(pageData?.ceoQuote, locale) || serverT(locale, "mission.ceoQuote");
+  const videoTitle = localizeText(pageData?.videoTitle, locale) || serverT(locale, "mission.videoTitle");
+  const videoDesc = localizeText(pageData?.videoDescription, locale) || serverT(locale, "mission.videoDesc");
   const defaultSections = [
     { title: serverT(locale, "mission.section1Title"), description: serverT(locale, "mission.section1Desc") },
     { title: serverT(locale, "mission.section2Title"), description: serverT(locale, "mission.section2Desc") },
@@ -79,6 +82,21 @@ export default async function MissionPage() {
           </div>
         </div>
       </section>
+
+      {/* CEO Video Section */}
+      {pageData?.videoUrl && (
+        <section className="py-16 px-6 md:px-12 max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            {videoTitle && (
+              <h2 className="text-2xl md:text-3xl font-serif text-emerald-950 font-bold">{videoTitle}</h2>
+            )}
+            {videoDesc && (
+              <p className="text-sm text-emerald-950/70 mt-2 max-w-2xl mx-auto">{videoDesc}</p>
+            )}
+          </div>
+          <VideoPlayer src={pageData.videoUrl} />
+        </section>
+      )}
 
       {/* Pillars Grid */}
       <section className="max-w-6xl mx-auto px-6 md:px-12 py-24">

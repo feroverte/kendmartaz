@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || "kendmart_secure_jwt_secret_token_2026";
 
 // Memory storage for multer — files uploaded to Cloudinary
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));

@@ -420,6 +420,13 @@ const en = {
   "forgotPassword.emailPlaceholder": "you@example.com",
   "forgotPassword.sending": "Sending...",
   "forgotPassword.sendResetLink": "Send Reset Link",
+  "forgotPassword.sendCode": "Send Code",
+  "forgotPassword.otpStepTitle": "Enter Reset Code",
+  "forgotPassword.otpStepSubtitle": "A 6-digit code was sent to your email",
+  "forgotPassword.otpSentMessage": "A 6-digit code has been sent to {email}",
+  "forgotPassword.otpLabel": "OTP Code",
+  "forgotPassword.otpPlaceholder": "000000",
+  "forgotPassword.backToEmail": "Back to Email",
 
   // Reset Password
   "resetPassword.minChars": "Password must be at least 8 characters",

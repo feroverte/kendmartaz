@@ -79,13 +79,15 @@ model Credit {
 }
 
 model User {
-  id           String          @id @default(uuid())
-  name         String
-  email        String          @unique
-  phone        String
-  password     String
-  impactPoints   Int              @default(0)
-  createdAt      DateTime         @default(now())
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  phone          String
+  password       String
+  impactPoints   Int             @default(0)
+  resetOtp       String?
+  resetOtpExpiry DateTime?
+  createdAt      DateTime        @default(now())
   savedListings  SavedListing[]
   listingAnswers ListingAnswer[]
 }

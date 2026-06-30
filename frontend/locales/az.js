@@ -420,6 +420,13 @@ const az = {
   "forgotPassword.emailPlaceholder": "ornek@example.com",
   "forgotPassword.sending": "Göndərilir...",
   "forgotPassword.sendResetLink": "Sıfırlama Linkini Göndər",
+  "forgotPassword.sendCode": "Kodu Göndər",
+  "forgotPassword.otpStepTitle": "Sıfırlama Kodunu Daxil Edin",
+  "forgotPassword.otpStepSubtitle": "E-poçtunuza 6 rəqəmli kod göndərildi",
+  "forgotPassword.otpSentMessage": "{email} ünvanına 6 rəqəmli kod göndərildi",
+  "forgotPassword.otpLabel": "OTP Kodu",
+  "forgotPassword.otpPlaceholder": "000000",
+  "forgotPassword.backToEmail": "E-poçta Qayıt",
 
   // Reset Password
   "resetPassword.minChars": "Şifrə ən az 8 simvol olmalıdır",

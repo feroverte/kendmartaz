@@ -7,6 +7,7 @@ import multer from "multer";
 import { parse } from "csv-parse/sync";
 import { db } from "./lib/db.js";
 import { uploadFile } from "./lib/cloudinary.js";
+import { sendOtpEmail } from "./lib/email.js";
 
 dotenv.config();
 
@@ -520,37 +521,43 @@ app.post("/api/user/login", async (req, res) => {
   }
 });
 
-// In-memory store for password reset tokens (email -> { token, expiry })
-const resetTokens = new Map();
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 app.post("/api/user/forgot-password", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, error: "Email is required" });
   try {
     const user = await db.user.findUnique({ where: { email } });
-    if (!user) return res.json({ success: true, message: "If that email exists, a reset link has been generated." });
-    const { randomBytes } = await import("crypto");
-    const token = randomBytes(32).toString("hex");
-    resetTokens.set(email, { token, expiry: Date.now() + 3600000 }); // 1 hour expiry
-    const resetLink = `${req.protocol}://${req.get("host")}/reset-password/${token}?email=${encodeURIComponent(email)}`;
-    console.log("Password reset link:", resetLink);
-    return res.json({ success: true, message: "Reset link generated.", resetLink });
+    if (!user) return res.json({ success: true, message: "If that email exists, a code has been sent." });
+    const otp = generateOtp();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+    await db.user.update({ where: { email }, data: { resetOtp: otp, resetOtpExpiry: expiry } });
+    await sendOtpEmail(email, otp);
+    return res.json({ success: true, message: "A 6-digit code has been sent to your email." });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
 });
 
 app.post("/api/user/reset-password", async (req, res) => {
-  const { token, email, password } = req.body;
-  if (!token || !email || !password) return res.status(400).json({ success: false, error: "Missing required fields" });
+  const { email, otp, password } = req.body;
+  if (!email || !otp || !password) return res.status(400).json({ success: false, error: "Missing required fields" });
+  if (password.length < 8) return res.status(400).json({ success: false, error: "Password must be at least 8 characters" });
   try {
-    const stored = resetTokens.get(email);
-    if (!stored || stored.token !== token || Date.now() > stored.expiry) {
-      return res.status(400).json({ success: false, error: "Invalid or expired reset token" });
+    const user = await db.user.findUnique({ where: { email } });
+    if (!user || !user.resetOtp || !user.resetOtpExpiry) {
+      return res.status(400).json({ success: false, error: "No password reset requested" });
+    }
+    if (user.resetOtp !== otp) {
+      return res.status(400).json({ success: false, error: "Invalid code" });
+    }
+    if (new Date() > user.resetOtpExpiry) {
+      return res.status(400).json({ success: false, error: "Code has expired" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.user.update({ where: { email }, data: { password: hashedPassword } });
-    resetTokens.delete(email);
+    await db.user.update({ where: { email }, data: { password: hashedPassword, resetOtp: null, resetOtpExpiry: null } });
     return res.json({ success: true, message: "Password updated successfully." });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

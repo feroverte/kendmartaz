@@ -160,7 +160,7 @@ function InfiniteCarousel({ farmers, t, _t, handleOpenModal }) {
   );
 }
 
-export default function HomepageContent({ initialFarmers, initialSettings, initialPageContent, locale = "en" }) {
+export default function HomepageContent({ initialFarmers, initialSettings, initialPageContent, locale = "en", userCount = 0 }) {
   const pc = initialPageContent || {};
   const _t = (v) => ht(v, locale);
   const t = useTranslations();
@@ -318,6 +318,12 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
             >
               {t("home.impactStats")}
             </button>
+            <Link
+              href="/login"
+              className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white rounded-2xl font-semibold text-base shadow-lg shadow-green-600/20 transition-all duration-300 flex items-center justify-center"
+            >
+              {t("home.registerCtaBtn")}
+            </Link>
           </div>
         </div>
       </section>
@@ -399,7 +405,7 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
       {/* 3. STATS / COUNTERS SECTION */}
       <section id="statistics-section" className="py-16 bg-emerald-950 text-white relative">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
             
             {/* Stat 1 */}
             <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
@@ -437,6 +443,19 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
               </div>
                 <span className="text-xs md:text-sm uppercase tracking-wider text-emerald-200/70 font-medium">
                 {t("home.purchaseRequests")}
+              </span>
+            </div>
+
+            {/* Stat 4 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4">
+                <Users className="w-6 h-6" />
+              </div>
+              <div className="text-3xl md:text-4xl font-numeric font-bold mb-1">
+                <AnimatedCounter value={String(userCount)} />
+              </div>
+                <span className="text-xs md:text-sm uppercase tracking-wider text-emerald-200/70 font-medium">
+                {t("research.registeredUsers")}
               </span>
             </div>
 

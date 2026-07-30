@@ -299,13 +299,13 @@ export default function HomepageContent({ initialFarmers, initialSettings, initi
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <button
-              onClick={() => scrollToSection("farmers-section")}
+            <Link
+              href="/market"
               className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white rounded-2xl font-semibold text-base shadow-lg shadow-green-600/20 transition-all duration-300 flex items-center justify-center gap-2"
             >
               {t("home.requestLocal")}
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
             <Link
               href="/mission"
               className="px-8 py-4 bg-white hover:bg-emerald-50 text-emerald-950 border border-emerald-900/10 rounded-2xl font-semibold text-base transition-colors duration-300 flex items-center justify-center"

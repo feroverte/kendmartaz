@@ -75,7 +75,7 @@ const en = {
   "dashboard.tonnesLabel": "tonnes CO2",
 
   // Home page
-  "home.requestLocal": "Request Local Produce",
+  "home.requestLocal": "Browse Marketplace",
   "home.ourMission": "Our Climate Mission",
   "home.impactStats": "Impact Statistics",
   "home.searchPlaceholder": "Search products, practices...",

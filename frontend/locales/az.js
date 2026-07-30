@@ -75,7 +75,7 @@ const az = {
   "dashboard.tonnesLabel": "ton CO2",
 
   // Home page
-  "home.requestLocal": "Yerli Məhsul Sifariş Et",
+  "home.requestLocal": "Bazara Keç",
   "home.ourMission": "İqlim Missiyamız",
   "home.impactStats": "Təsir Statistikası",
   "home.searchPlaceholder": "Məhsulları, təcrübələri axtar...",

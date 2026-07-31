@@ -17,7 +17,7 @@ const az = {
 
   // Footer
   "footer.tagline": "İcmaları ekoloji məsuliyyətli yerli fermerlərlə birbaşa birləşdirərək torpağı bərpa etmək, ərzaq millərini aradan qaldırmaq və iqlimə davamlı gələcəyi təmin etmək.",
-  "footer.carbonNeutral": "100% Karbon Neytral Layihə",
+  "footer.carbonNeutral": "Karbon Neytral Fermerliyi Dəstəkləyirik",
   "footer.climateInitiative": "İqlim Təşəbbüsü",
   "footer.ourMission": "İqlim Missiyamız",
   "footer.whySustainable": "Davamlı Əkinçilik Niyə Vacibdir",

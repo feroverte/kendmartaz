@@ -17,7 +17,7 @@ const en = {
 
   // Footer
   "footer.tagline": "Connecting communities directly with eco-responsible local farmers to regenerate soil, eliminate food miles, and secure climate-resilient futures.",
-  "footer.carbonNeutral": "100% Carbon Neutral Project",
+  "footer.carbonNeutral": "Supporting Carbon Neutral Farming",
   "footer.climateInitiative": "Climate Initiative",
   "footer.ourMission": "Our Climate Mission",
   "footer.whySustainable": "Why Sustainable Farming",

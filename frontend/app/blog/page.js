@@ -45,7 +45,7 @@ export default async function BlogListPage() {
                   <div className="h-52 w-full bg-emerald-900/10 relative">
                     <img
                       src={article.imageUrl}
-                      alt={article.title}
+                      alt={localizeText(article.title, locale)}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -62,12 +62,12 @@ export default async function BlogListPage() {
                     
                     <h3 className="text-xl font-serif text-emerald-950 font-bold hover:text-emerald-850 transition-colors">
                       <Link href={`/blog/${article.id}`}>
-                        {article.title}
+                        {localizeText(article.title, locale)}
                       </Link>
                     </h3>
                     
                     <p className="text-sm text-emerald-950/75 leading-relaxed font-light">
-                      {article.summary}
+                      {localizeText(article.summary, locale)}
                     </p>
                   </div>
 

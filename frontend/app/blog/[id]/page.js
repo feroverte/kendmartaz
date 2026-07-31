@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getArticleById } from "@/app/actions/dbActions";
 import { Calendar, ArrowLeft, BookOpen, Clock } from "lucide-react";
 import { notFound } from "next/navigation";
-import { getServerLocale, serverT, localizeText } from "@/lib/serverLocale";
+import { getServerLocale, serverT, localizeText, formatArticleContent } from "@/lib/serverLocale";
 
 export const revalidate = 0;
 
@@ -19,7 +19,8 @@ export default async function ArticleDetailPage({ params }) {
   }
 
   const dateLocale = locale === "az" ? "az-AZ" : "en-US";
-  const wordCount = article.content.replace(/<[^>]+>/g, "").split(/\s+/).length;
+  const localContent = localizeText(article.content, locale) || "";
+  const wordCount = localContent.replace(/<[^>]+>/g, "").split(/\s+/).length;
   const readingTime = Math.max(Math.round(wordCount / 200), 1);
 
   return (
@@ -38,7 +39,7 @@ export default async function ArticleDetailPage({ params }) {
           <BookOpen className="w-3.5 h-3.5" /> {serverT(locale, "blog.environmentalInsight")}
         </span>
         <h1 className="text-3xl md:text-5xl font-serif text-emerald-950 font-bold leading-tight">
-          {article.title}
+          {localizeText(article.title, locale)}
         </h1>
         
         <div className="flex flex-wrap items-center gap-6 text-sm text-emerald-950/60 border-y border-emerald-950/10 py-4 font-numeric font-medium">
@@ -60,13 +61,13 @@ export default async function ArticleDetailPage({ params }) {
       <div className="h-[400px] w-full bg-emerald-900/10 rounded-3xl overflow-hidden mb-12 shadow-sm">
         <img
           src={article.imageUrl}
-          alt={article.title}
+          alt={localizeText(article.title, locale)}
           className="w-full h-full object-cover"
         />
       </div>
 
       <article className="prose prose-emerald max-w-none prose-p:text-emerald-950/80 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-base md:prose-p:text-lg prose-p:font-light prose-h2:font-serif prose-h2:text-emerald-950 prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-4">
-        <div dangerouslySetInnerHTML={{ __html: article.content }} />
+        <div dangerouslySetInnerHTML={{ __html: formatArticleContent(article.content, locale) }} />
       </article>
 
       <div className="mt-16 p-8 rounded-3xl bg-[#f3f1eb] border border-emerald-950/5 text-center flex flex-col items-center gap-4">

@@ -1,5 +1,5 @@
 import React from "react";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { checkAdminSession } from "@/app/actions/dbActions";
 import AdminLoginForm from "@/components/AdminLoginForm";
 import { ShieldAlert } from "lucide-react";
@@ -9,13 +9,21 @@ export const revalidate = 0;
 
 const ADMIN_PATH = process.env.ADMIN_PATH || "kendmart-admin";
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({ searchParams }) {
   const cookieStore = await cookies();
   const locale = cookieStore.get("kendmart_locale")?.value || "en";
   const isAuthorized = await checkAdminSession();
 
   if (isAuthorized) {
     redirect(`/${ADMIN_PATH}/manage`);
+  }
+
+  const params = await searchParams;
+  const accessKey = process.env.ADMIN_ACCESS_KEY || "";
+  const providedKey = params?.key || "";
+
+  if (!accessKey || providedKey !== accessKey) {
+    notFound();
   }
 
   const pageText = locale === "az" ? {

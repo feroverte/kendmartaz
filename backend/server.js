@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import multer from "multer";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { randomBytes } from "crypto";
 import { parse } from "csv-parse/sync";
 import { db } from "./lib/db.js";
 import { uploadFile } from "./lib/cloudinary.js";
@@ -13,13 +16,57 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || "kendmart_secure_jwt_secret_token_2026";
+const JWT_SECRET = process.env.JWT_SECRET || randomBytes(64).toString("hex");
+if (!process.env.JWT_SECRET) {
+  console.warn("WARNING: JWT_SECRET is not set. Using a random secret that changes on restart. Set JWT_SECRET in environment.");
+}
+
+// Trust proxy so rate limiting sees correct client IPs behind Render's proxy
+app.set("trust proxy", 1);
 
 // Memory storage for multer — files uploaded to Cloudinary
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+// Security headers
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
+// Restrict CORS to configured origins (defaults to allowing localhost for dev).
+// Set CORS_ORIGINS in production to your frontend URL(s), comma-separated.
+const configuredOrigins = (process.env.CORS_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+const devOrigins = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"];
+const allowAllOrigins = configuredOrigins.length === 0;
+if (process.env.NODE_ENV === "production" && allowAllOrigins) {
+  console.warn("WARNING: CORS_ORIGINS is not set. Set it to your frontend URL(s) to restrict cross-origin access.");
+}
+app.use(cors({
+  origin: (origin, cb) => {
+    if (allowAllOrigins || !origin || devOrigins.includes(origin) || configuredOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+    return cb(null, false);
+  }
+}));
+app.use(express.json({ limit: "2mb" }));
+
+// Global API rate limit
+const globalLimiter = rateLimit({ windowMs: 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false });
+app.use("/api/", globalLimiter);
+
+// Stricter rate limit for auth endpoints (prevents brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many attempts. Please try again later." }
+});
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many attempts. Please try again later." }
+});
 
 // Auth Middleware
 function authenticateAdmin(req, res, next) {
@@ -43,7 +90,11 @@ function authenticateAdmin(req, res, next) {
 // ----------------------------------------------------
 // Authentication Routes
 // ----------------------------------------------------
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authLimiter, async (req, res) => {
+  const gateKey = req.headers["x-admin-gate"];
+  if (!gateKey || gateKey !== process.env.ADMIN_ACCESS_KEY) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ success: false, error: "Email and password required" });
@@ -80,7 +131,7 @@ app.post("/api/auth/login", async (req, res) => {
       data: { failedAttempts: 0, lockoutUntil: null }
     });
 
-    const token = jwt.sign({ role: "admin", email: admin.email, id: admin.id }, JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ role: "admin", email: admin.email, id: admin.id }, JWT_SECRET, { expiresIn: "1d" });
     return res.json({ success: true, token, admin: { email: admin.email, name: admin.name } });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
@@ -90,7 +141,7 @@ app.post("/api/auth/login", async (req, res) => {
 // ----------------------------------------------------
 // File Upload Route — uploads to Cloudinary
 // ----------------------------------------------------
-app.post("/api/upload", upload.single("file"), async (req, res) => {
+app.post("/api/upload", authenticateAdmin, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const url = await uploadFile(req.file.buffer);
@@ -489,7 +540,7 @@ app.delete("/api/impact-maps/:product", authenticateAdmin, async (req, res) => {
 // ----------------------------------------------------
 // User Authentication Routes
 // ----------------------------------------------------
-app.post("/api/user/register", async (req, res) => {
+app.post("/api/user/register", authLimiter, async (req, res) => {
   const { name, email, phone, password } = req.body;
   try {
     const existingEmail = await db.user.findUnique({ where: { email } });
@@ -507,7 +558,7 @@ app.post("/api/user/register", async (req, res) => {
   }
 });
 
-app.post("/api/user/login", async (req, res) => {
+app.post("/api/user/login", authLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await db.user.findUnique({ where: { email } });
@@ -525,7 +576,7 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-app.post("/api/user/forgot-password", async (req, res) => {
+app.post("/api/user/forgot-password", otpLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, error: "Email is required" });
   try {
@@ -541,7 +592,7 @@ app.post("/api/user/forgot-password", async (req, res) => {
   }
 });
 
-app.post("/api/user/reset-password", async (req, res) => {
+app.post("/api/user/reset-password", otpLimiter, async (req, res) => {
   const { email, otp, password } = req.body;
   if (!email || !otp || !password) return res.status(400).json({ success: false, error: "Missing required fields" });
   if (password.length < 8) return res.status(400).json({ success: false, error: "Password must be at least 8 characters" });

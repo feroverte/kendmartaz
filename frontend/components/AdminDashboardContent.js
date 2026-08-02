@@ -36,7 +36,8 @@ import {
   deleteFaqQuestion,
   getReviews,
   updateReview,
-  deleteReview
+  deleteReview,
+  uploadImage
 } from "@/app/actions/dbActions";
 import { useLocale } from "@/context/LanguageContext";
 import { useTranslations } from "@/hooks/useTranslations";
@@ -269,6 +270,19 @@ export default function AdminDashboardContent({
   const showFeedback = (type, message) => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback({ type: "", message: "" }), 4000);
+  };
+
+  const handleUpload = async (file, onSuccess) => {
+    if (!file) return;
+    try {
+      const result = await uploadImage(file);
+      if (result.success) {
+        onSuccess(result.url);
+        showFeedback("success", t("admin.feedbackImageUploaded"));
+      } else {
+        showFeedback("error", result.error || t("admin.feedbackUploadFailed"));
+      }
+    } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
   };
 
   const handleLogout = async () => {
@@ -842,21 +856,8 @@ export default function AdminDashboardContent({
                       />
                         <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                           <Upload className="w-3 h-3" /> {t("admin.upload")}
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append("file", file);
-                              const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                              const data = await res.json();
-                              if (data.success) {
-                                setFarmerForm({ ...farmerForm, photoUrl: data.url });
-                                showFeedback("success", t("admin.feedbackImageUploaded"));
-                              } else {
-                                showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                              }
-                            } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            handleUpload(e.target.files?.[0], (url) => setFarmerForm({ ...farmerForm, photoUrl: url }));
                           }} />
                         </label>
                     </div>
@@ -964,21 +965,8 @@ export default function AdminDashboardContent({
                       />
                       <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                         <Upload className="w-3 h-3" /> {t("admin.upload")}
-                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          try {
-                            const formData = new FormData();
-                            formData.append("file", file);
-                            const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                            const data = await res.json();
-                            if (data.success) {
-                              setArticleForm({ ...articleForm, imageUrl: data.url });
-                              showFeedback("success", t("admin.feedbackImageUploaded"));
-                            } else {
-                              showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                            }
-                          } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                          handleUpload(e.target.files?.[0], (url) => setArticleForm({ ...articleForm, imageUrl: url }));
                         }} />
                       </label>
                     </div>
@@ -1075,21 +1063,8 @@ export default function AdminDashboardContent({
                         <input type="text" placeholder={t("admin.thumbnailPlaceholder")} value={extArticleForm.imageUrl || ""} onChange={(e) => setExtArticleForm({ ...extArticleForm, imageUrl: e.target.value })} className="flex-1 p-2.5 bg-white border border-emerald-955/15 rounded-xl text-sm" />
                         <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                           <Upload className="w-3 h-3" /> {t("admin.upload")}
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append("file", file);
-                              const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                              const data = await res.json();
-                              if (data.success) {
-                                setExtArticleForm({ ...extArticleForm, imageUrl: data.url });
-                                showFeedback("success", t("admin.feedbackImageUploaded"));
-                              } else {
-                                showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                              }
-                            } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            handleUpload(e.target.files?.[0], (url) => setExtArticleForm({ ...extArticleForm, imageUrl: url }));
                           }} />
                         </label>
                       </div>
@@ -1334,21 +1309,8 @@ export default function AdminDashboardContent({
                     />
                     <label className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                       <Upload className="w-3 h-3" /> {t("admin.upload")}
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const formData = new FormData();
-                          formData.append("file", file);
-                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                          const data = await res.json();
-                          if (data.success) {
-                            setMissionForm({ ...missionForm, ceoPhoto: data.url });
-                            showFeedback("success", t("admin.feedbackImageUploaded"));
-                          } else {
-                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                          }
-                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        handleUpload(e.target.files?.[0], (url) => setMissionForm({ ...missionForm, ceoPhoto: url }));
                       }} />
                     </label>
                   </div>
@@ -1398,21 +1360,8 @@ export default function AdminDashboardContent({
                     </button>
                     <label className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                       <Upload className="w-3 h-3" /> {t("admin.upload")}
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const formData = new FormData();
-                          formData.append("file", file);
-                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                          const data = await res.json();
-                          if (data.success) {
-                            setMissionForm({ ...missionForm, photos: [...missionForm.photos, data.url] });
-                            showFeedback("success", t("admin.feedbackImageUploaded"));
-                          } else {
-                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                          }
-                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        handleUpload(e.target.files?.[0], (url) => setMissionForm({ ...missionForm, photos: [...missionForm.photos, url] }));
                       }} />
                     </label>
                   </div>
@@ -1432,21 +1381,8 @@ export default function AdminDashboardContent({
                     />
                     <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                       <Upload className="w-3 h-3" /> {t("admin.upload")}
-                      <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const formData = new FormData();
-                          formData.append("file", file);
-                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                          const data = await res.json();
-                          if (data.success) {
-                            setMissionForm({ ...missionForm, videoUrl: data.url });
-                            showFeedback("success", t("admin.feedbackImageUploaded"));
-                          } else {
-                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                          }
-                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      <input type="file" accept="video/*" className="hidden" onChange={(e) => {
+                        handleUpload(e.target.files?.[0], (url) => setMissionForm({ ...missionForm, videoUrl: url }));
                       }} />
                     </label>
                   </div>
@@ -1537,21 +1473,8 @@ export default function AdminDashboardContent({
                     />
                     <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                       <Upload className="w-3 h-3" /> {t("admin.upload")}
-                      <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const formData = new FormData();
-                          formData.append("file", file);
-                          const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                          const data = await res.json();
-                          if (data.success) {
-                            handleHomeField("videoUrl", data.url);
-                            showFeedback("success", t("admin.feedbackImageUploaded"));
-                          } else {
-                            showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                          }
-                        } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                      <input type="file" accept="video/*" className="hidden" onChange={(e) => {
+                        handleUpload(e.target.files?.[0], (url) => handleHomeField("videoUrl", url));
                       }} />
                     </label>
                   </div>
@@ -1763,24 +1686,8 @@ export default function AdminDashboardContent({
                         <input type="text" value={listingForm.photoMain} onChange={(e) => setListingForm({...listingForm, photoMain: e.target.value})} className="flex-1 p-2.5 bg-white border border-emerald-950/15 rounded-xl text-sm" placeholder={t("admin.listingPhotoPlaceholder")} />
                         <label className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-semibold uppercase cursor-pointer transition-colors flex items-center gap-1 whitespace-nowrap">
                           <Upload className="w-3 h-3" /> {t("admin.upload")}
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append("file", file);
-                              const res = await fetch(`${BACKEND_URL}/api/upload`, {
-                                method: "POST",
-                                body: formData
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                setListingForm({...listingForm, photoMain: data.url});
-                                showFeedback("success", t("admin.feedbackImageUploaded"));
-                              } else {
-                                showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                              }
-                            } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); console.error(err); }
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            handleUpload(e.target.files?.[0], (url) => setListingForm({...listingForm, photoMain: url}));
                           }} />
                         </label>
                       </div>
@@ -1853,24 +1760,15 @@ export default function AdminDashboardContent({
                         <label className="w-20 h-20 rounded-xl border-2 border-dashed border-emerald-300 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors bg-emerald-50/50 shrink-0">
                           <Plus className="w-5 h-5 text-emerald-400" />
                           <span className="text-[8px] text-emerald-400 mt-0.5 font-semibold">{t("admin.upload")}</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            try {
-                              const formData = new FormData();
-                              formData.append("file", file);
-                              const res = await fetch(`${BACKEND_URL}/api/upload`, { method: "POST", body: formData });
-                              const data = await res.json();
-                              if (data.success) {
-                                const arr = JSON.parse(listingForm.photos || "[]");
-                                if (arr.length >= 9) { showFeedback("error", "Max 9 additional photos"); return; }
-                                arr.push(data.url);
-                                setListingForm({...listingForm, photos: JSON.stringify(arr)});
-                                showFeedback("success", t("admin.feedbackImageUploaded"));
-                              } else {
-                                showFeedback("error", data.error || t("admin.feedbackUploadFailed"));
-                              }
-                            } catch (err) { showFeedback("error", t("admin.feedbackUploadFailed")); }
+                            handleUpload(file, (url) => {
+                              const arr = JSON.parse(listingForm.photos || "[]");
+                              if (arr.length >= 9) { showFeedback("error", "Max 9 additional photos"); return; }
+                              arr.push(url);
+                              setListingForm({...listingForm, photos: JSON.stringify(arr)});
+                            });
                             e.target.value = "";
                           }} />
                         </label>

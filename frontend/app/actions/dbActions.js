@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { revalidatePath } from "next/cache";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const JWT_SECRET = process.env.JWT_SECRET || "kendmart_secure_jwt_secret_token_2026";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 const ADMIN_PATH = process.env.ADMIN_PATH || "kendmart-admin";
 const COOKIE_NAME = "kendmart_admin_token";
 
@@ -22,15 +22,23 @@ async function getAuthHeader() {
 // Auth Actions
 export async function adminLogin(email, password) {
   try {
+    const cookieStore = await cookies();
+    const gateCookie = cookieStore.get("kendmart_admin_gate");
+    if (!gateCookie) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-gate": gateCookie.value
+      },
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
     if (res.ok && data.success) {
-      const cookieStore = await cookies();
       cookieStore.set(COOKIE_NAME, data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -39,6 +47,9 @@ export async function adminLogin(email, password) {
         path: "/",
       });
       return { success: true, admin: data.admin };
+    }
+    if (res.status === 401) {
+      return { success: false, error: "Unauthorized" };
     }
     return { success: false, error: data.error || "Login failed" };
   } catch (error) {
@@ -63,6 +74,30 @@ export async function checkAdminSession() {
     return decoded && decoded.role === "admin";
   } catch (e) {
     return false;
+  }
+}
+
+// Upload an image/file to the backend as an authenticated admin.
+// Accepts a File or Blob object.
+export async function uploadImage(file) {
+  try {
+    const authHeader = await getAuthHeader();
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BACKEND_URL}/api/upload`, {
+      method: "POST",
+      headers: authHeader,
+      body: formData,
+      cache: "no-store"
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      return { success: false, error: data.error || "Upload failed" };
+    }
+    return { success: true, url: data.url };
+  } catch (error) {
+    console.error("uploadImage failed:", error);
+    return { success: false, error: "Unable to connect to backend server" };
   }
 }
 
@@ -401,8 +436,7 @@ export async function getImpactMaps() {
   } catch (error) {
     console.error("getImpactMaps failed:", error);
     return [];
-  }
-}
+  }}
 
 export async function upsertImpactMap(product, points) {
   const isAdmin = await checkAdminSession();
